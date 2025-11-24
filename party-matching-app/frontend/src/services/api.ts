@@ -1,10 +1,13 @@
 import axios from 'axios';
 import Constants from 'expo-constants';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || Constants.expoConfig?.extra?.apiUrl || 'http://10.0.0.15:5000';
+const cfg: any = Constants.expoConfig ?? {};
+const extraApi = cfg.extra?.apiUrl;
+const API_URL = process.env.EXPO_PUBLIC_API_URL || extraApi || 'http://10.0.0.15:5000';
 
 export const apiClient = axios.create({
   baseURL: API_URL,
+  timeout: 10000,
 });
 
 export default apiClient;
