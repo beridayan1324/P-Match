@@ -1,33 +1,31 @@
-import mongoose from 'mongoose';
+import { DataTypes, Model } from 'sequelize';
+import sequelize from '../db';
+import User from './User';
+import Party from './Party';
 
-const matchSchema = new mongoose.Schema({
-    userId1: {
-        type: mongoose.Schema.Types.ObjectId,
-        required: true,
-        ref: 'User'
-    },
-    userId2: {
-        type: mongoose.Schema.Types.ObjectId,
-        required: true,
-        ref: 'User'
-    },
-    status: {
-        type: String,
-        enum: ['pending', 'accepted', 'declined'],
-        default: 'pending'
-    },
-    partyId: {
-        type: mongoose.Schema.Types.ObjectId,
-        required: true,
-        ref: 'Party'
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now,
-        expires: '24h' // Automatically remove the match after 24 hours
-    }
+class Match extends Model {
+  public id!: string;
+  public partyId!: string;
+  public userAId!: string;
+  public userBId!: string;
+  public acceptedA!: boolean;
+  public acceptedB!: boolean;
+  public status!: 'pending' | 'confirmed' | 'declined';
+}
+
+Match.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  partyId: { type: DataTypes.UUID, allowNull: false },
+  userAId: { type: DataTypes.UUID, allowNull: false },
+  userBId: { type: DataTypes.UUID, allowNull: false },
+  acceptedA: { type: DataTypes.BOOLEAN, defaultValue: false },
+  acceptedB: { type: DataTypes.BOOLEAN, defaultValue: false },
+  status: { type: DataTypes.ENUM('pending', 'confirmed', 'declined'), defaultValue: 'pending' },
+}, {
+  sequelize,
+  modelName: 'Match',
+  tableName: 'matches',
+  timestamps: true,
 });
-
-const Match = mongoose.model('Match', matchSchema);
 
 export default Match;

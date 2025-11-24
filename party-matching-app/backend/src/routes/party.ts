@@ -1,19 +1,24 @@
-import { Router } from 'express';
-import { createParty, getParties, joinParty, toggleOptIn } from '../controllers/partyController';
-import { authenticate } from '../middleware/auth';
+import express from 'express';
+import authenticate from '../middleware/auth';
+import {
+  createParty,
+  listParties,
+  joinParty,
+  toggleOptIn
+} from '../controllers/partyController';
 
-const router = Router();
+const router = express.Router();
 
-// Route to create a new party
+// Create a party
 router.post('/', authenticate, createParty);
 
-// Route to get the list of parties
-router.get('/', getParties);
+// List parties
+router.get('/', listParties);
 
-// Route to join a party
+// Join a party
 router.post('/:partyId/join', authenticate, joinParty);
 
-// Route to toggle matching opt-in status
-router.post('/:partyId/toggle-opt-in', authenticate, toggleOptIn);
+// Toggle matching opt-in for a participant
+router.post('/:partyId/toggle-optin', authenticate, toggleOptIn);
 
 export default router;

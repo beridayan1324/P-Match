@@ -1,19 +1,28 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import { DataTypes, Model } from 'sequelize';
+import sequelize from '../db';
+import User from './User';
 
-interface IParty extends Document {
-    name: string;
-    date: Date;
-    location: string;
-    participants: string[];
+class Party extends Model {
+  public id!: string;
+  public name!: string;
+  public date!: Date;
+  public location?: string;
 }
 
-const PartySchema: Schema = new Schema({
-    name: { type: String, required: true },
-    date: { type: Date, required: true },
-    location: { type: String, required: true },
-    participants: { type: [String], default: [] }
+Party.init({
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true,
+  },
+  name: { type: DataTypes.STRING, allowNull: false },
+  date: { type: DataTypes.DATE, allowNull: false },
+  location: { type: DataTypes.STRING }
+}, {
+  sequelize,
+  modelName: 'Party',
+  tableName: 'parties',
+  timestamps: true,
 });
-
-const Party = mongoose.model<IParty>('Party', PartySchema);
 
 export default Party;

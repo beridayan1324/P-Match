@@ -1,13 +1,13 @@
-import { Router } from 'express';
-import { getMatchPreview, updateMatchStatus } from '../controllers/matchController';
-import { authenticate } from '../middleware/auth';
+import express from 'express';
+import authenticate from '../middleware/auth';
+import { getMatchPreview, respondToMatch } from '../controllers/matchController';
 
-const router = Router();
+const router = express.Router();
 
-// Route to get match preview
+// Get current user's pending match preview
 router.get('/preview', authenticate, getMatchPreview);
 
-// Route to update match status
-router.post('/status', authenticate, updateMatchStatus);
+// Respond to a match (accept/decline)
+router.post('/:matchId/respond', authenticate, respondToMatch);
 
 export default router;

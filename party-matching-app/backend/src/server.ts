@@ -1,22 +1,24 @@
 import express from 'express';
-import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import app from './app';
+import sequelize from './db';
+import './models/index'; // register models
 
 dotenv.config();
 
 const PORT = process.env.PORT || 5000;
 
-mongoose.connect(process.env.MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-})
-.then(() => {
-    console.log('Connected to MongoDB');
-    app.listen(PORT, () => {
-        console.log(`Server is running on http://localhost:${PORT}`);
-    });
-})
-.catch(err => {
-    console.error('MongoDB connection error:', err);
-});
+(async () => {
+    try {
+        await sequelize.authenticate();
+        console.log('Connected to SQL database');
+        // sync models (use { alter: true } or migrations in production)
+        await sequelize.sync();
+        app.listen(PORT, () => {
+            console.log(`Server is running on http://localhost:${PORT}`);
+        });
+    } catch (err) {
+        console.error('Database connection error:', err);
+        process.exit(1);
+    }
+})();

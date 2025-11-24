@@ -1,39 +1,50 @@
-import { Match } from '../models/Match';
-import { Party } from '../models/Party';
-import { User } from '../models/User';
+import PartyParticipant from '../models/PartyParticipant';
+import User from '../models/User';
+import Match from '../models/Match';
 
-export const matchUsers = async (partyId: string) => {
-    const party = await Party.findById(partyId).populate('participants');
-    if (!party) {
-        throw new Error('Party not found');
+/**
+ * Simple random male<->female matching for a given party.
+ * Creates Match records with status 'pending'.
+ */
+export async function runMatchingForParty(partyId: string) {
+    // find opt-in participants
+    const participants = await PartyParticipant.findAll({ where: { partyId, optIn: true } });
+    const userIds = participants.map(p => p.userId);
+
+    if (!userIds.length) return [];
+
+    const users = await User.findAll({ where: { id: userIds } });
+
+    const males = users.filter(u => u.gender === 'male');
+    const females = users.filter(u => u.gender === 'female');
+
+    const pairs: Array<{ userAId: string; userBId: string }> = [];
+
+    // random pairing
+    const m = [...males];
+    const f = [...females];
+    while (m.length && f.length) {
+        const mi = Math.floor(Math.random() * m.length);
+        const fi = Math.floor(Math.random() * f.length);
+        const male = m.splice(mi, 1)[0];
+        const female = f.splice(fi, 1)[0];
+        pairs.push({ userAId: male.id, userBId: female.id });
     }
 
-    const males = party.participants.filter(user => user.gender === 'male');
-    const females = party.participants.filter(user => user.gender === 'female');
+    if (!pairs.length) return [];
 
-    const matches = [];
-
-    females.forEach(female => {
-        const randomMale = males[Math.floor(Math.random() * males.length)];
-        if (randomMale) {
-            matches.push({
-                userId1: female._id,
-                userId2: randomMale._id,
-                status: 'pending',
-                partyId: party._id
-            });
-        }
-    });
-
-    await Match.insertMany(matches);
-    return matches;
-};
-
-export const getMatchPreview = async (userId: string) => {
-    const matches = await Match.find({
-        $or: [{ userId1: userId }, { userId2: userId }],
+    // create matches in bulk
+    const matchRecords = pairs.map(p => ({
+        partyId,
+        userAId: p.userAId,
+        userBId: p.userBId,
+        acceptedA: false,
+        acceptedB: false,
         status: 'pending'
-    }).populate('userId1 userId2');
+    }));
 
-    return matches;
-};
+    const created = await Match.bulkCreate(matchRecords);
+    return created;
+}
+
+export default runMatchingForParty;
