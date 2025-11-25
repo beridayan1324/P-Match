@@ -1,48 +1,50 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, Button, Alert } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { login } from '../services/api';
+import React from 'react';
+import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { apiClient } from '../services/api';
 
-const LoginScreen = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const navigation = useNavigation();
+export default function LoginScreen({ navigation }: any) {
+  const [email, setEmail] = React.useState('');
+  const [password, setPassword] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
 
-  const handleLogin = async () => {
+  const onLogin = async () => {
+    if (!email || !password) {
+      Alert.alert('Error', 'Please fill all fields');
+      return;
+    }
     try {
-      const response = await login(email, password);
-      if (response.token) {
-        // Store token and navigate to the next screen
-        // For example, AsyncStorage.setItem('token', response.token);
-        Alert.alert('Login Successful', 'Welcome back!');
-        navigation.navigate('Profile'); // Navigate to Profile or another screen
-      } else {
-        Alert.alert('Login Failed', response.message);
-      }
-    } catch (error) {
-      Alert.alert('Error', 'An error occurred during login.');
+      setLoading(true);
+      const res = await apiClient.post('/api/auth/login', { email, password });
+      await AsyncStorage.setItem('authToken', res.data.token);
+      navigation.replace('PartyList');
+    } catch (e: any) {
+      Alert.alert('Login Error', e?.response?.data?.message || String(e));
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <View>
-      <Text>Login</Text>
-      <TextInput
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-      />
-      <TextInput
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-      <Button title="Login" onPress={handleLogin} />
-      <Button title="Go to Signup" onPress={() => navigation.navigate('Signup')} />
+    <View style={styles.container}>
+      <Text style={styles.title}>Login</Text>
+
+      <Text style={styles.label}>Email</Text>
+      <TextInput placeholder="you@example.com" value={email} onChangeText={setEmail} style={styles.input} autoCapitalize="none" />
+
+      <Text style={styles.label}>Password</Text>
+      <TextInput placeholder="••••••" value={password} onChangeText={setPassword} style={styles.input} secureTextEntry />
+
+      <Button title={loading ? 'Logging in...' : 'Login'} onPress={onLogin} disabled={loading} />
+      <View style={{ height: 12 }} />
+      <Button title="Don't have an account? Sign Up" onPress={() => navigation.navigate('Signup')} />
     </View>
   );
-};
+}
 
-export default LoginScreen;
+const styles = StyleSheet.create({
+  container: { flex: 1, padding: 16, backgroundColor: '#fff', justifyContent: 'center' },
+  title: { fontSize: 24, fontWeight: '700', marginBottom: 24 },
+  label: { marginTop: 12, fontWeight: '600', marginBottom: 4 },
+  input: { borderWidth: 1, borderColor: '#ddd', padding: 12, borderRadius: 8, marginBottom: 8 }
+});

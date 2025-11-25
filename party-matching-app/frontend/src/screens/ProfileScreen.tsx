@@ -1,96 +1,71 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, Button, Image, StyleSheet } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
-import { uploadImage } from '../services/firebase';
-import { getUserProfile, updateUserProfile } from '../services/api';
+import React from 'react';
+import { View, Text, TextInput, Button, StyleSheet, ScrollView, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { apiClient } from '../services/api';
 
-const ProfileScreen = () => {
-  const [name, setName] = useState('');
-  const [gender, setGender] = useState('');
-  const [profileImage, setProfileImage] = useState('');
-  const [preferences, setPreferences] = useState('');
+export default function ProfileScreen({ navigation }: any) {
+  const [name, setName] = React.useState('');
+  const [gender, setGender] = React.useState('');
+  const [preferences, setPreferences] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      const profile = await getUserProfile();
-      setName(profile.name);
-      setGender(profile.gender);
-      setProfileImage(profile.profileImage);
-      setPreferences(profile.preferences);
+  React.useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const token = await AsyncStorage.getItem('authToken');
+        if (!token) return;
+        const res = await apiClient.get('/api/profile', { headers: { Authorization: `Bearer ${token}` } });
+        setName(res.data.name || '');
+        setGender(res.data.gender || '');
+        setPreferences(res.data.preferences || '');
+      } catch (e) {
+        console.warn('load profile error', e);
+      }
     };
-
-    fetchProfile();
+    loadProfile();
   }, []);
 
-  const handleImagePicker = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
-
-    if (!result.cancelled) {
-      const uploadedImageUrl = await uploadImage(result.uri);
-      setProfileImage(uploadedImageUrl);
+  const onSave = async () => {
+    try {
+      setLoading(true);
+      const token = await AsyncStorage.getItem('authToken');
+      await apiClient.put('/api/profile', { name, gender, preferences }, { headers: { Authorization: `Bearer ${token}` } });
+      Alert.alert('Success', 'Profile updated');
+    } catch (e: any) {
+      Alert.alert('Error', e?.response?.data?.message || String(e));
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleSaveProfile = async () => {
-    await updateUserProfile({ name, gender, profileImage, preferences });
-  };
-
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Profile</Text>
-      <Image source={{ uri: profileImage }} style={styles.image} />
-      <Button title="Pick an image from camera roll" onPress={handleImagePicker} />
-      <TextInput
-        style={styles.input}
-        placeholder="Name"
-        value={name}
-        onChangeText={setName}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Gender"
-        value={gender}
-        onChangeText={setGender}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Preferences"
-        value={preferences}
-        onChangeText={setPreferences}
-      />
-      <Button title="Save Profile" onPress={handleSaveProfile} />
-    </View>
+    <ScrollView style={styles.container}>
+      <Text style={styles.title}>My Profile</Text>
+
+      <Text style={styles.label}>Name</Text>
+      <TextInput placeholder="Your name" value={name} onChangeText={setName} style={styles.input} />
+
+      <Text style={styles.label}>Gender</Text>
+      <View style={styles.genderRow}>
+        <Button title="M" onPress={() => setGender('male')} color={gender === 'male' ? '#007AFF' : '#ccc'} />
+        <Button title="F" onPress={() => setGender('female')} color={gender === 'female' ? '#007AFF' : '#ccc'} />
+        <Button title="O" onPress={() => setGender('other')} color={gender === 'other' ? '#007AFF' : '#ccc'} />
+      </View>
+
+      <Text style={styles.label}>Preferences</Text>
+      <TextInput placeholder="What are you looking for?" value={preferences} onChangeText={setPreferences} style={styles.input} multiline />
+
+      <Button title={loading ? 'Saving...' : 'Save Profile'} onPress={onSave} disabled={loading} />
+      <View style={{ height: 12 }} />
+      <Button title="Back" onPress={() => navigation.goBack()} />
+    </ScrollView>
   );
-};
+}
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-  },
-  image: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    marginBottom: 20,
-  },
-  input: {
-    height: 40,
-    borderColor: 'gray',
-    borderWidth: 1,
-    marginBottom: 20,
-    paddingHorizontal: 10,
-  },
+  container: { flex: 1, padding: 16, backgroundColor: '#fff' },
+  title: { fontSize: 24, fontWeight: '700', marginBottom: 24 },
+  label: { marginTop: 12, fontWeight: '600', marginBottom: 4 },
+  input: { borderWidth: 1, borderColor: '#ddd', padding: 12, borderRadius: 8, marginBottom: 8 },
+  genderRow: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 16 }
 });
-
-export default ProfileScreen;
