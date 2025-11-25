@@ -1,6 +1,11 @@
 import React from 'react';
-import { View, Text, TextInput, Button, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import InputField from '../components/InputField';
+import PrimaryButton from '../components/PrimaryButton';
+import { theme } from '../theme/theme';
 import { apiClient } from '../services/api';
 
 export default function ProfileScreen({ navigation }: any) {
@@ -10,62 +15,209 @@ export default function ProfileScreen({ navigation }: any) {
   const [loading, setLoading] = React.useState(false);
 
   React.useEffect(() => {
-    const loadProfile = async () => {
-      try {
-        const token = await AsyncStorage.getItem('authToken');
-        if (!token) return;
-        const res = await apiClient.get('/api/profile', { headers: { Authorization: `Bearer ${token}` } });
-        setName(res.data.name || '');
-        setGender(res.data.gender || '');
-        setPreferences(res.data.preferences || '');
-      } catch (e) {
-        console.warn('load profile error', e);
-      }
-    };
     loadProfile();
   }, []);
+
+  const loadProfile = async () => {
+    try {
+      const token = await AsyncStorage.getItem('authToken');
+      const res = await apiClient.get('/api/profile', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setName(res.data.name || '');
+      setGender(res.data.gender || '');
+      setPreferences(res.data.preferences || '');
+    } catch (e) {
+      console.warn('Failed to load profile', e);
+    }
+  };
 
   const onSave = async () => {
     try {
       setLoading(true);
       const token = await AsyncStorage.getItem('authToken');
-      await apiClient.put('/api/profile', { name, gender, preferences }, { headers: { Authorization: `Bearer ${token}` } });
-      Alert.alert('Success', 'Profile updated');
+      await apiClient.put(
+        '/api/profile',
+        { name, gender, preferences },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      Alert.alert('Success', 'Profile updated successfully');
     } catch (e: any) {
-      Alert.alert('Error', e?.response?.data?.message || String(e));
+      Alert.alert('Error', e?.response?.data?.message || 'Failed to update profile');
     } finally {
       setLoading(false);
     }
   };
 
+  const onLogout = async () => {
+    await AsyncStorage.removeItem('authToken');
+    navigation.replace('Welcome');
+  };
+
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.title}>My Profile</Text>
-
-      <Text style={styles.label}>Name</Text>
-      <TextInput placeholder="Your name" value={name} onChangeText={setName} style={styles.input} />
-
-      <Text style={styles.label}>Gender</Text>
-      <View style={styles.genderRow}>
-        <Button title="M" onPress={() => setGender('male')} color={gender === 'male' ? '#007AFF' : '#ccc'} />
-        <Button title="F" onPress={() => setGender('female')} color={gender === 'female' ? '#007AFF' : '#ccc'} />
-        <Button title="O" onPress={() => setGender('other')} color={gender === 'other' ? '#007AFF' : '#ccc'} />
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Profile</Text>
+        <View style={{ width: 40 }} />
       </View>
 
-      <Text style={styles.label}>Preferences</Text>
-      <TextInput placeholder="What are you looking for?" value={preferences} onChangeText={setPreferences} style={styles.input} multiline />
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <View style={styles.avatarContainer}>
+          <View style={styles.avatarWrapper}>
+            <Image
+              source={{ uri: 'https://via.placeholder.com/150' }}
+              style={styles.avatar}
+            />
+            <TouchableOpacity style={styles.editAvatarButton}>
+              <Ionicons name="camera" size={20} color={theme.colors.white} />
+            </TouchableOpacity>
+          </View>
+        </View>
 
-      <Button title={loading ? 'Saving...' : 'Save Profile'} onPress={onSave} disabled={loading} />
-      <View style={{ height: 12 }} />
-      <Button title="Back" onPress={() => navigation.goBack()} />
-    </ScrollView>
+        <View style={styles.formContainer}>
+          <InputField
+            label="Full Name"
+            value={name}
+            onChangeText={setName}
+            placeholder="Your name"
+            icon="person"
+          />
+
+          <View style={styles.genderContainer}>
+            <Text style={styles.label}>Gender</Text>
+            <View style={styles.genderButtons}>
+              {['male', 'female', 'other'].map((g) => (
+                <TouchableOpacity
+                  key={g}
+                  onPress={() => setGender(g)}
+                  style={[styles.genderButton, gender === g && styles.genderButtonActive]}
+                >
+                  <Text style={[styles.genderText, gender === g && styles.genderTextActive]}>
+                    {g.charAt(0).toUpperCase() + g.slice(1)}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          <InputField
+            label="Preferences"
+            value={preferences}
+            onChangeText={setPreferences}
+            placeholder="What are you looking for?"
+            icon="heart"
+          />
+
+          <PrimaryButton title="Save Changes" onPress={onSave} loading={loading} />
+
+          <TouchableOpacity onPress={onLogout} style={styles.logoutButton}>
+            <Text style={styles.logoutText}>Logout</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: '#fff' },
-  title: { fontSize: 24, fontWeight: '700', marginBottom: 24 },
-  label: { marginTop: 12, fontWeight: '600', marginBottom: 4 },
-  input: { borderWidth: 1, borderColor: '#ddd', padding: 12, borderRadius: 8, marginBottom: 8 },
-  genderRow: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 16 }
+  container: {
+    flex: 1,
+    backgroundColor: theme.colors.bg,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
+    backgroundColor: theme.colors.white,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: theme.colors.text,
+  },
+  scrollContent: {
+    padding: theme.spacing.lg,
+  },
+  avatarContainer: {
+    alignItems: 'center',
+    marginBottom: theme.spacing.xl,
+  },
+  avatarWrapper: {
+    position: 'relative',
+  },
+  avatar: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: theme.colors.bg,
+    borderWidth: 4,
+    borderColor: theme.colors.white,
+  },
+  editAvatarButton: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: theme.colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: theme.colors.white,
+  },
+  formContainer: {
+    gap: theme.spacing.md,
+  },
+  genderContainer: {
+    marginBottom: theme.spacing.md,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.colors.text,
+    marginBottom: theme.spacing.sm,
+  },
+  genderButtons: {
+    flexDirection: 'row',
+    gap: theme.spacing.sm,
+  },
+  genderButton: {
+    flex: 1,
+    paddingVertical: 12,
+    backgroundColor: theme.colors.white,
+    borderRadius: theme.borderRadius.md,
+    alignItems: 'center',
+    ...theme.shadows.card,
+  },
+  genderButtonActive: {
+    backgroundColor: theme.colors.primary,
+  },
+  genderText: {
+    color: theme.colors.text,
+    fontWeight: '600',
+  },
+  genderTextActive: {
+    color: theme.colors.white,
+  },
+  logoutButton: {
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginTop: theme.spacing.md,
+  },
+  logoutText: {
+    color: theme.colors.error,
+    fontWeight: '600',
+    fontSize: 16,
+  },
 });

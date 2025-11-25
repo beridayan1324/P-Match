@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Party Matching App",
+    "name": "party-matching-app",
     "slug": "party-matching-app",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -10,6 +10,7 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+    "userInterfaceStyle": "light",
     "updates": {
       "fallbackToCacheTimeout": 0
     },
@@ -27,6 +28,9 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-font"
+    ]
   }
 }

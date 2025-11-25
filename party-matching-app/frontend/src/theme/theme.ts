@@ -1,0 +1,51 @@
+export const theme = {
+  colors: {
+    primary: '#FF4F70',
+    primaryLight: '#FF7FA1',
+    secondary: '#6C5CE7',
+    bg: '#F6F6F6',
+    cardBg: '#FFFFFF',
+    text: '#2D3436',
+    textLight: '#636E72',
+    white: '#FFFFFF',
+    error: '#FF3B30',
+    success: '#34C759',
+  },
+  spacing: {
+    xs: 4,
+    sm: 8,
+    md: 16,
+    lg: 24,
+    xl: 32,
+    xxl: 48,
+  },
+  borderRadius: {
+    sm: 8,
+    md: 12,
+    lg: 20,
+    xl: 30,
+    full: 9999,
+  },
+  shadows: {
+    card: {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.1,
+      shadowRadius: 10,
+      elevation: 5,
+    },
+    button: {
+      shadowColor: '#FF4F70',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 8,
+      elevation: 5,
+    },
+  },
+  fonts: {
+    title: 'Poppins_600SemiBold',
+    titleBold: 'Poppins_700Bold',
+    body: 'Inter_400Regular',
+    bodyBold: 'Inter_600SemiBold',
+  },
+};

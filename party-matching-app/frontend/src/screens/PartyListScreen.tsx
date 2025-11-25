@@ -1,6 +1,10 @@
 import React from 'react';
-import { View, Text, FlatList, TouchableOpacity, Button, StyleSheet, RefreshControl, Alert } from 'react-native';
+import { View, Text, FlatList, StyleSheet, RefreshControl, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import PartyCard from '../components/PartyCard';
+import { theme } from '../theme/theme';
 import { apiClient } from '../services/api';
 
 export default function PartyListScreen({ navigation }: any) {
@@ -12,8 +16,8 @@ export default function PartyListScreen({ navigation }: any) {
       setLoading(true);
       const res = await apiClient.get('/api/party');
       setParties(res.data || []);
-    } catch (e: any) {
-      Alert.alert('Error', e?.message || 'Failed to load parties');
+    } catch (e) {
+      console.warn('Failed to load parties', e);
     } finally {
       setLoading(false);
     }
@@ -29,40 +33,85 @@ export default function PartyListScreen({ navigation }: any) {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.title}>Parties</Text>
-        <Button title="Profile" onPress={() => navigation.navigate('Profile')} />
+        <Text style={styles.title}>Discover</Text>
+        <View style={styles.headerButtons}>
+          <TouchableOpacity onPress={() => navigation.navigate('Profile')} style={styles.iconButton}>
+            <Ionicons name="person-circle-outline" size={28} color={theme.colors.text} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('MatchesList')} style={styles.iconButton}>
+            <Ionicons name="heart-circle-outline" size={28} color={theme.colors.primary} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <FlatList
         data={parties}
-        keyExtractor={(i) => i.id}
-        refreshControl={<RefreshControl refreshing={loading} onRefresh={loadParties} />}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.card}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item, index }) => (
+          <PartyCard
+            party={item}
+            index={index}
             onPress={() => navigation.navigate('PartyDetails', { party: item })}
-          >
-            <Text style={styles.cardTitle}>{item.name}</Text>
-            <Text style={styles.cardText}>📍 {item.location}</Text>
-            <Text style={styles.cardText}>📅 {new Date(item.date).toLocaleString()}</Text>
-          </TouchableOpacity>
+          />
         )}
-        ListEmptyComponent={<Text style={styles.empty}>No parties available</Text>}
+        contentContainerStyle={styles.listContent}
+        refreshControl={<RefreshControl refreshing={loading} onRefresh={loadParties} />}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No parties yet</Text>
+            <Text style={styles.emptySubtext}>Check back soon for upcoming events!</Text>
+          </View>
+        }
       />
-
-      <Button title="Logout" color="red" onPress={onLogout} />
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8f8f8' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', padding: 16, backgroundColor: '#fff' },
-  title: { fontSize: 24, fontWeight: '700' },
-  card: { backgroundColor: '#fff', margin: 12, padding: 16, borderRadius: 12, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 4 },
-  cardTitle: { fontSize: 18, fontWeight: '700', marginBottom: 8 },
-  cardText: { fontSize: 14, color: '#666', marginBottom: 4 },
-  empty: { textAlign: 'center', marginTop: 32, color: '#999' }
+  container: {
+    flex: 1,
+    backgroundColor: theme.colors.bg,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
+    backgroundColor: theme.colors.white,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: theme.colors.text,
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    gap: theme.spacing.sm,
+  },
+  iconButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  listContent: {
+    paddingVertical: theme.spacing.md,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    paddingTop: 60,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: theme.colors.text,
+    marginBottom: theme.spacing.sm,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: theme.colors.textLight,
+  },
 });
