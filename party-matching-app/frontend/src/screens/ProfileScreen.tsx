@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import InputField from '../components/InputField';
 import PrimaryButton from '../components/PrimaryButton';
@@ -13,6 +14,8 @@ export default function ProfileScreen({ navigation }: any) {
   const [gender, setGender] = React.useState('');
   const [preferences, setPreferences] = React.useState('');
   const [loading, setLoading] = React.useState(false);
+  const [profileImage, setProfileImage] = React.useState<string>('');
+  const [additionalImages, setAdditionalImages] = React.useState<string[]>([]);
 
   React.useEffect(() => {
     loadProfile();
@@ -27,21 +30,67 @@ export default function ProfileScreen({ navigation }: any) {
       setName(res.data.name || '');
       setGender(res.data.gender || '');
       setPreferences(res.data.preferences || '');
+      setProfileImage(res.data.profileImage || '');
+      setAdditionalImages(res.data.additionalImages || []);
     } catch (e) {
       console.warn('Failed to load profile', e);
     }
+  };
+
+  const pickImage = async (isProfile: boolean = true) => {
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    
+    if (permissionResult.granted === false) {
+      Alert.alert('Permission Required', 'Please allow access to your photos');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.5,
+      base64: true,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      const imageUri = `data:image/jpeg;base64,${result.assets[0].base64}`;
+      
+      if (isProfile) {
+        setProfileImage(imageUri);
+      } else {
+        if (additionalImages.length < 5) {
+          setAdditionalImages([...additionalImages, imageUri]);
+        } else {
+          Alert.alert('Limit Reached', 'You can only add up to 5 additional photos');
+        }
+      }
+    }
+  };
+
+  const removeAdditionalImage = (index: number) => {
+    setAdditionalImages(additionalImages.filter((_, i) => i !== index));
   };
 
   const onSave = async () => {
     try {
       setLoading(true);
       const token = await AsyncStorage.getItem('authToken');
+      
       await apiClient.put(
         '/api/profile',
-        { name, gender, preferences },
+        { 
+          name, 
+          gender, 
+          preferences, 
+          profileImage,
+          additionalImages 
+        },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      
       Alert.alert('Success', 'Profile updated successfully');
+      await loadProfile();
     } catch (e: any) {
       Alert.alert('Error', e?.response?.data?.message || 'Failed to update profile');
     } finally {
@@ -68,13 +117,36 @@ export default function ProfileScreen({ navigation }: any) {
         <View style={styles.avatarContainer}>
           <View style={styles.avatarWrapper}>
             <Image
-              source={{ uri: 'https://via.placeholder.com/150' }}
+              source={{ uri: profileImage || 'https://via.placeholder.com/150' }}
               style={styles.avatar}
             />
-            <TouchableOpacity style={styles.editAvatarButton}>
+            <TouchableOpacity style={styles.editAvatarButton} onPress={() => pickImage(true)}>
               <Ionicons name="camera" size={20} color={theme.colors.white} />
             </TouchableOpacity>
           </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Additional Photos ({additionalImages.length}/5)</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imageGrid}>
+            {additionalImages.map((uri, index) => (
+              <View key={index} style={styles.additionalImageContainer}>
+                <Image source={{ uri }} style={styles.additionalImage} />
+                <TouchableOpacity
+                  style={styles.removeImageButton}
+                  onPress={() => removeAdditionalImage(index)}
+                >
+                  <Ionicons name="close-circle" size={24} color={theme.colors.error} />
+                </TouchableOpacity>
+              </View>
+            ))}
+            {additionalImages.length < 5 && (
+              <TouchableOpacity style={styles.addImageButton} onPress={() => pickImage(false)}>
+                <Ionicons name="add" size={32} color={theme.colors.textLight} />
+                <Text style={styles.addImageText}>Add Photo</Text>
+              </TouchableOpacity>
+            )}
+          </ScrollView>
         </View>
 
         <View style={styles.formContainer}>
@@ -134,6 +206,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing.md,
     backgroundColor: theme.colors.white,
+    ...theme.shadows.card,
   },
   backButton: {
     width: 40,
@@ -175,6 +248,51 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 3,
     borderColor: theme.colors.white,
+  },
+  section: {
+    marginBottom: theme.spacing.xl,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: theme.colors.text,
+    marginBottom: theme.spacing.md,
+  },
+  imageGrid: {
+    flexDirection: 'row',
+  },
+  additionalImageContainer: {
+    position: 'relative',
+    marginRight: theme.spacing.sm,
+  },
+  additionalImage: {
+    width: 100,
+    height: 100,
+    borderRadius: theme.borderRadius.md,
+    backgroundColor: theme.colors.bg,
+  },
+  removeImageButton: {
+    position: 'absolute',
+    top: -8,
+    right: -8,
+    backgroundColor: theme.colors.white,
+    borderRadius: 12,
+  },
+  addImageButton: {
+    width: 100,
+    height: 100,
+    borderRadius: theme.borderRadius.md,
+    backgroundColor: theme.colors.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    borderColor: theme.colors.textLight,
+  },
+  addImageText: {
+    fontSize: 12,
+    color: theme.colors.textLight,
+    marginTop: 4,
   },
   formContainer: {
     gap: theme.spacing.md,

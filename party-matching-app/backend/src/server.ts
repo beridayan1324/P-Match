@@ -13,7 +13,7 @@ const PORT = process.env.PORT || 5000;
         await sequelize.authenticate();
         console.log('Connected to SQL database');
         // sync models (use { alter: true } or migrations in production)
-        await sequelize.sync();
+        await sequelize.sync({ alter: true });
         app.listen(PORT, () => {
             console.log(`Server is running on http://localhost:${PORT}`);
         });

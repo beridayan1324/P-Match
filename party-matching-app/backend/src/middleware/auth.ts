@@ -14,10 +14,17 @@ export default function authenticate(req: Request, res: Response, next: NextFunc
 
     try {
         const decoded = jwt.verify(token, JWT_SECRET) as any;
-        // attach userId to request in a type-agnostic way
-        (req as any).userId = decoded?.id;
+        console.log('Decoded JWT:', decoded); // Debug log
+        
+        // Try both userId and id fields
+        (req as any).userId = decoded?.userId || decoded?.id;
+        
+        console.log('Set req.userId to:', (req as any).userId); // Debug log
         return next();
     } catch (err) {
+        console.error('JWT verify error:', err);
         return res.status(401).json({ message: 'Invalid token' });
     }
 }
+
+export const authenticateToken = authenticate;

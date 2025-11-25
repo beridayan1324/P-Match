@@ -11,8 +11,8 @@ dotenv.config();
 const app = express();
 
 // Middleware
-app.use(json());
-app.use(urlencoded({ extended: true }));
+app.use(json({ limit: '50mb' }));
+app.use(urlencoded({ limit: '50mb',extended: true }));
 
 // Routes
 app.use('/api/auth', authRoutes);
