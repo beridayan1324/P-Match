@@ -1,74 +1,73 @@
 import axios from 'axios';
-import Constants from 'expo-constants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const cfg: any = Constants.expoConfig ?? {};
-const extraApi = cfg.extra?.apiUrl;
-const API_URL = process.env.EXPO_PUBLIC_API_URL || extraApi || 'http://10.0.0.15:5000';
+const API_URL = 'http://10.0.0.15:5000'; // Remove /api from here
 
 export const apiClient = axios.create({
   baseURL: API_URL,
-  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  timeout: 30000,
 });
 
-export default apiClient;
+// Add token to all requests
+apiClient.interceptors.request.use(
+  async (config) => {
+    const token = await AsyncStorage.getItem('authToken');
+    console.log('API Request:', config.method?.toUpperCase(), config.url);
+    console.log('Full URL:', API_URL + config.url);
+    console.log('Token:', token ? 'Present' : 'Missing');
+    
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
-// User Authentication
-export const signup = async (email, password) => {
-    const response = await apiClient.post(`/auth/signup`, { email, password });
+// Log responses
+apiClient.interceptors.response.use(
+  (response) => {
+    console.log('API Response:', response.status, response.config.url);
+    return response;
+  },
+  (error) => {
+    console.log('API Error:', error.message);
+    console.log('Error details:', error.response?.data);
+    return Promise.reject(error);
+  }
+);
+
+export const authAPI = {
+  register: async (email: string, password: string, name: string, gender: string) => {
+    const response = await apiClient.post('/api/auth/register', { email, password, name, gender });
+    if (response.data.token) {
+      await AsyncStorage.setItem('authToken', response.data.token);
+      await AsyncStorage.setItem('userData', JSON.stringify(response.data.user));
+    }
     return response.data;
+  },
+  
+  login: async (email: string, password: string) => {
+    const response = await apiClient.post('/api/auth/login', { email, password });
+    if (response.data.token) {
+      await AsyncStorage.setItem('authToken', response.data.token);
+      await AsyncStorage.setItem('userData', JSON.stringify(response.data.user));
+    }
+    return response.data;
+  },
 };
 
-export const login = async (email, password) => {
-    const response = await apiClient.post(`/auth/login`, { email, password });
-    return response.data;
+export const profileAPI = {
+  getProfile: () => apiClient.get('/api/profile'),
+  updateProfile: (data: any) => apiClient.put('/api/profile', data),
 };
 
-// User Profile
-export const getUserProfile = async (token) => {
-    const response = await apiClient.get(`/profile`, {
-        headers: { Authorization: `Bearer ${token}` }
-    });
-    return response.data;
-};
-
-export const updateUserProfile = async (token, profileData) => {
-    const response = await apiClient.put(`/profile`, profileData, {
-        headers: { Authorization: `Bearer ${token}` }
-    });
-    return response.data;
-};
-
-// Party Management
-export const listParties = async () => {
-    const response = await apiClient.get(`/parties`);
-    return response.data;
-};
-
-export const joinParty = async (token, partyId) => {
-    const response = await apiClient.post(`/parties/join`, { partyId }, {
-        headers: { Authorization: `Bearer ${token}` }
-    });
-    return response.data;
-};
-
-export const toggleOptIn = async (token, partyId) => {
-    const response = await apiClient.post(`/parties/toggle-opt-in`, { partyId }, {
-        headers: { Authorization: `Bearer ${token}` }
-    });
-    return response.data;
-};
-
-// Match Handling
-export const getMatchPreview = async (token) => {
-    const response = await apiClient.get(`/matches/preview`, {
-        headers: { Authorization: `Bearer ${token}` }
-    });
-    return response.data;
-};
-
-export const updateMatchStatus = async (token, matchId, status) => {
-    const response = await apiClient.put(`/matches/${matchId}`, { status }, {
-        headers: { Authorization: `Bearer ${token}` }
-    });
-    return response.data;
+export const partyAPI = {
+  getAllParties: () => apiClient.get('/api/party'),
+  createParty: (data: any) => apiClient.post('/api/party', data),
 };

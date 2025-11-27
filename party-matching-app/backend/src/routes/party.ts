@@ -1,24 +1,20 @@
-import express from 'express';
+import { Router } from 'express';
 import authenticate from '../middleware/auth';
-import {
-  createParty,
-  listParties,
-  joinParty,
-  toggleOptIn
-} from '../controllers/partyController';
+import isAdmin from '../middleware/isAdmin';
+import { createParty, getAllParties, joinParty, toggleOptIn } from '../controllers/partyController';
 
-const router = express.Router();
+const router = Router();
 
-// Create a party
-router.post('/', authenticate, createParty);
+// Admin only - create party
+router.post('/', authenticate, isAdmin, createParty);
 
-// List parties
-router.get('/', listParties);
+// All users - get parties
+router.get('/', authenticate, getAllParties);
 
-// Join a party
+// Join party
 router.post('/:partyId/join', authenticate, joinParty);
 
-// Toggle matching opt-in for a participant
-router.post('/:partyId/toggle-optin', authenticate, toggleOptIn);
+// Toggle opt-in
+router.post('/:partyId/opt-in', authenticate, toggleOptIn);
 
 export default router;

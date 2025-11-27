@@ -6,6 +6,7 @@ interface UserAttributes {
   name: string;
   email: string;
   password: string;
+  isAdmin?: boolean;
   gender?: 'male' | 'female' | 'other';
   preferences?: string;
   profileImage?: string;
@@ -20,6 +21,7 @@ class User extends Model<UserAttributes> implements UserAttributes {
   public name!: string;
   public email!: string;
   public password!: string;
+  public isAdmin!: boolean;
   public gender?: 'male' | 'female' | 'other';
   public preferences?: string;
   public profileImage?: string;
@@ -54,6 +56,10 @@ User.init(
     password: {
       type: DataTypes.STRING,
       allowNull: false,
+    },
+    isAdmin: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
     },
     gender: {
       type: DataTypes.ENUM('male', 'female', 'other'),

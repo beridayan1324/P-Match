@@ -1,43 +1,52 @@
 import React from 'react';
-import { View, TextInput, Text, StyleSheet } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TextInputProps } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../theme/theme';
 
-interface Props {
-  label: string;
-  value: string;
-  onChangeText: (text: string) => void;
-  placeholder?: string;
-  secureTextEntry?: boolean;
+interface InputFieldProps extends TextInputProps {
+  label?: string;
   icon?: keyof typeof Ionicons.glyphMap;
-  keyboardType?: 'default' | 'email-address' | 'numeric' | 'phone-pad';
+  error?: string;
+  multiline?: boolean;
+  numberOfLines?: number;
 }
 
-export default function InputField({
-  label,
-  value,
-  onChangeText,
-  placeholder,
-  secureTextEntry,
-  icon,
-  keyboardType,
-}: Props) {
+export default function InputField({ 
+  label, 
+  icon, 
+  error, 
+  multiline = false,
+  numberOfLines = 1,
+  style,
+  ...props 
+}: InputFieldProps) {
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>{label}</Text>
-      <View style={styles.inputContainer}>
-        {icon && <Ionicons name={icon} size={20} color={theme.colors.textLight} style={styles.icon} />}
+      {label && <Text style={styles.label}>{label}</Text>}
+      <View style={[styles.inputContainer, error && styles.inputError, multiline && styles.multilineContainer]}>
+        {icon && (
+          <Ionicons 
+            name={icon} 
+            size={20} 
+            color={theme.colors.textLight} 
+            style={styles.icon}
+          />
+        )}
         <TextInput
-          value={value}
-          onChangeText={onChangeText}
-          placeholder={placeholder}
+          style={[
+            styles.input, 
+            icon && styles.inputWithIcon,
+            multiline && styles.multilineInput,
+            style
+          ]}
           placeholderTextColor={theme.colors.textLight}
-          secureTextEntry={secureTextEntry}
-          keyboardType={keyboardType}
-          style={styles.input}
-          autoCapitalize="none"
+          multiline={multiline}
+          numberOfLines={numberOfLines}
+          textAlignVertical={multiline ? 'top' : 'center'}
+          {...props}
         />
       </View>
+      {error && <Text style={styles.errorText}>{error}</Text>}
     </View>
   );
 }
@@ -60,13 +69,33 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.md,
     ...theme.shadows.card,
   },
+  multilineContainer: {
+    alignItems: 'flex-start',
+    paddingVertical: theme.spacing.md,
+  },
   icon: {
     marginRight: theme.spacing.sm,
   },
   input: {
     flex: 1,
-    paddingVertical: 16,
     fontSize: 16,
     color: theme.colors.text,
+    paddingVertical: theme.spacing.md,
+  },
+  inputWithIcon: {
+    paddingLeft: 0,
+  },
+  multilineInput: {
+    minHeight: 100,
+    paddingTop: 0,
+  },
+  inputError: {
+    borderWidth: 1,
+    borderColor: theme.colors.error,
+  },
+  errorText: {
+    fontSize: 12,
+    color: theme.colors.error,
+    marginTop: theme.spacing.xs,
   },
 });

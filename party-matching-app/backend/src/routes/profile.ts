@@ -41,7 +41,6 @@ router.put('/', authenticate, async (req: any, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
     
-    // Build update object
     const updateData: any = {};
     
     if (name !== undefined) updateData.name = name;
