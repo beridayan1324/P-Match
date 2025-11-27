@@ -1,32 +1,51 @@
-import React from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, Alert, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
 import InputField from '../components/InputField';
 import PrimaryButton from '../components/PrimaryButton';
 import { theme } from '../theme/theme';
-import { apiClient } from '../services/api';
+
+const API_URL = 'http://10.0.0.15:5000';
 
 export default function SignupScreen({ navigation }: any) {
-  const [name, setName] = React.useState('');
-  const [email, setEmail] = React.useState('');
-  const [password, setPassword] = React.useState('');
-  const [gender, setGender] = React.useState('');
-  const [loading, setLoading] = React.useState(false);
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [gender, setGender] = useState<'male' | 'female' | 'other'>('male');
+  const [loading, setLoading] = useState(false);
 
-  const onSignup = async () => {
+  const handleSignup = async () => {
     if (!name || !email || !password) {
-      Alert.alert('Error', 'Please fill all fields');
+      Alert.alert('Error', 'Please fill in all fields');
       return;
     }
 
     try {
       setLoading(true);
-      const res = await apiClient.post('/api/auth/signup', { name, email, password, gender });
-      await AsyncStorage.setItem('authToken', res.data.token);
+      console.log('Attempting signup with:', { email, name, gender });
+      console.log('URL:', `${API_URL}/api/auth/register`);
+      
+      const response = await axios.post(`${API_URL}/api/auth/register`, {
+        email,
+        password,
+        name,
+        gender,
+      });
+
+      console.log('Signup response:', response.data);
+
+      if (response.data.token && response.data.user) {
+        await AsyncStorage.setItem('authToken', response.data.token);
+        await AsyncStorage.setItem('userData', JSON.stringify(response.data.user));
+      }
+
       navigation.replace('PartyList');
-    } catch (e: any) {
-      Alert.alert('Error', e?.response?.data?.message || 'Signup failed');
+    } catch (error: any) {
+      console.error('Signup error:', error);
+      console.error('Error response:', error.response?.data);
+      Alert.alert('Error', error?.response?.data?.message || 'Registration failed');
     } finally {
       setLoading(false);
     }
@@ -34,18 +53,16 @@ export default function SignupScreen({ navigation }: any) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <View>
-          <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>Join the best party matching platform</Text>
-        </View>
+      <ScrollView contentContainerStyle={styles.content}>
+        <Text style={styles.title}>Create Account</Text>
+        <Text style={styles.subtitle}>Join the party!</Text>
 
-        <View style={styles.formContainer}>
+        <View style={styles.form}>
           <InputField
-            label="Full Name"
+            label="Name"
             value={name}
             onChangeText={setName}
-            placeholder="John Doe"
+            placeholder="Enter your name"
             icon="person"
           />
 
@@ -53,28 +70,29 @@ export default function SignupScreen({ navigation }: any) {
             label="Email"
             value={email}
             onChangeText={setEmail}
-            placeholder="you@example.com"
-            icon="mail"
+            placeholder="Enter your email"
             keyboardType="email-address"
+            autoCapitalize="none"
+            icon="mail"
           />
 
           <InputField
             label="Password"
             value={password}
             onChangeText={setPassword}
-            placeholder="••••••••"
-            icon="lock-closed"
+            placeholder="Enter your password"
             secureTextEntry
+            icon="lock-closed"
           />
 
           <View style={styles.genderContainer}>
-            <Text style={styles.label}>Gender</Text>
+            <Text style={styles.genderLabel}>Gender</Text>
             <View style={styles.genderButtons}>
               {['male', 'female', 'other'].map((g) => (
                 <TouchableOpacity
                   key={g}
-                  onPress={() => setGender(g)}
                   style={[styles.genderButton, gender === g && styles.genderButtonActive]}
+                  onPress={() => setGender(g as any)}
                 >
                   <Text style={[styles.genderText, gender === g && styles.genderTextActive]}>
                     {g.charAt(0).toUpperCase() + g.slice(1)}
@@ -84,14 +102,18 @@ export default function SignupScreen({ navigation }: any) {
             </View>
           </View>
 
-          <PrimaryButton title="Sign Up" onPress={onSignup} loading={loading} />
+          <PrimaryButton
+            title="Sign Up"
+            onPress={handleSignup}
+            loading={loading}
+            style={styles.signupButton}
+          />
 
-          <Text style={styles.loginText}>
-            Already have an account?{' '}
-            <Text style={styles.loginLink} onPress={() => navigation.navigate('Login')}>
-              Login
+          <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+            <Text style={styles.loginText}>
+              Already have an account? <Text style={styles.loginLink}>Login</Text>
             </Text>
-          </Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -103,27 +125,29 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.bg,
   },
-  scrollContent: {
-    padding: theme.spacing.lg,
+  content: {
+    flexGrow: 1,
+    padding: theme.spacing.xl,
+    justifyContent: 'center',
   },
   title: {
     fontSize: 32,
     fontWeight: '700',
     color: theme.colors.text,
-    marginBottom: theme.spacing.sm,
+    marginBottom: theme.spacing.xs,
   },
   subtitle: {
     fontSize: 16,
     color: theme.colors.textLight,
-    marginBottom: theme.spacing.xl,
+    marginBottom: theme.spacing.xxl,
   },
-  formContainer: {
+  form: {
     gap: theme.spacing.md,
   },
   genderContainer: {
-    marginBottom: theme.spacing.md,
+    marginVertical: theme.spacing.sm,
   },
-  label: {
+  genderLabel: {
     fontSize: 14,
     fontWeight: '600',
     color: theme.colors.text,
@@ -135,29 +159,35 @@ const styles = StyleSheet.create({
   },
   genderButton: {
     flex: 1,
-    paddingVertical: 12,
-    backgroundColor: theme.colors.white,
+    paddingVertical: theme.spacing.sm,
     borderRadius: theme.borderRadius.md,
+    backgroundColor: theme.colors.white,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
     alignItems: 'center',
-    ...theme.shadows.card,
   },
   genderButtonActive: {
     backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
   },
   genderText: {
+    fontSize: 14,
     color: theme.colors.text,
     fontWeight: '600',
   },
   genderTextActive: {
     color: theme.colors.white,
   },
+  signupButton: {
+    marginTop: theme.spacing.md,
+  },
   loginText: {
     textAlign: 'center',
     color: theme.colors.textLight,
-    marginTop: theme.spacing.md,
+    marginTop: theme.spacing.lg,
   },
   loginLink: {
     color: theme.colors.primary,
-    fontWeight: '700',
+    fontWeight: '600',
   },
 });

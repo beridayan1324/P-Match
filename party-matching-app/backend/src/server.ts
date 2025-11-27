@@ -13,7 +13,7 @@ async function startServer() {
     await sequelize.authenticate();
     console.log('Connected to SQL database');
     
-    await sequelize.sync({ alter: true });
+    await sequelize.sync({ alter: false });
     console.log('Database schema updated');
     
     // Start cron job for automatic matching (check every 5 minutes)
