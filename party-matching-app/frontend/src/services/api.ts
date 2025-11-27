@@ -1,7 +1,7 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_URL = 'http://10.0.0.15:5000'; // Remove /api from here
+const API_URL = 'http://10.0.0.15:5000';
 
 export const apiClient = axios.create({
   baseURL: API_URL,
@@ -16,8 +16,6 @@ apiClient.interceptors.request.use(
   async (config) => {
     const token = await AsyncStorage.getItem('authToken');
     console.log('API Request:', config.method?.toUpperCase(), config.url);
-    console.log('Full URL:', API_URL + config.url);
-    console.log('Token:', token ? 'Present' : 'Missing');
     
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -45,7 +43,8 @@ apiClient.interceptors.response.use(
 export const authAPI = {
   register: async (email: string, password: string, name: string, gender: string) => {
     const response = await apiClient.post('/api/auth/register', { email, password, name, gender });
-    if (response.data.token) {
+    
+    if (response.data.token && response.data.user) {
       await AsyncStorage.setItem('authToken', response.data.token);
       await AsyncStorage.setItem('userData', JSON.stringify(response.data.user));
     }
@@ -54,7 +53,8 @@ export const authAPI = {
   
   login: async (email: string, password: string) => {
     const response = await apiClient.post('/api/auth/login', { email, password });
-    if (response.data.token) {
+    
+    if (response.data.token && response.data.user) {
       await AsyncStorage.setItem('authToken', response.data.token);
       await AsyncStorage.setItem('userData', JSON.stringify(response.data.user));
     }
@@ -70,4 +70,7 @@ export const profileAPI = {
 export const partyAPI = {
   getAllParties: () => apiClient.get('/api/party'),
   createParty: (data: any) => apiClient.post('/api/party', data),
+  joinParty: (partyId: string) => apiClient.post(`/api/party/${partyId}/join`),
+  getParticipants: (partyId: string) => apiClient.get(`/api/party/${partyId}/participants`),
+  getMatches: (partyId: string) => apiClient.get(`/api/party/${partyId}/matches`),
 };

@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -7,44 +7,39 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import InputField from '../components/InputField';
 import PrimaryButton from '../components/PrimaryButton';
 import { theme } from '../theme/theme';
-import { apiClient } from '../services/api';
+import { profileAPI } from '../services/api';
 
 export default function ProfileScreen({ navigation }: any) {
-  const [name, setName] = React.useState('');
-  const [gender, setGender] = React.useState('');
-  const [preferences, setPreferences] = React.useState('');
-  const [loading, setLoading] = React.useState(false);
-  const [profileImage, setProfileImage] = React.useState<string>('');
-  const [additionalImages, setAdditionalImages] = React.useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [name, setName] = useState('');
+  const [gender, setGender] = useState<'male' | 'female' | 'other'>('male');
+  const [genderPreference, setGenderPreference] = useState<'male' | 'female' | 'other' | 'any'>('any');
+  const [bio, setBio] = useState('');
+  const [profileImage, setProfileImage] = useState('');
+  const [interests, setInterests] = useState('');
+  const [location, setLocation] = useState('');
 
-  React.useEffect(() => {
+  useEffect(() => {
     loadProfile();
   }, []);
 
   const loadProfile = async () => {
     try {
-      const token = await AsyncStorage.getItem('authToken');
-      const res = await apiClient.get('/api/profile', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setName(res.data.name || '');
-      setGender(res.data.gender || '');
-      setPreferences(res.data.preferences || '');
-      setProfileImage(res.data.profileImage || '');
-      setAdditionalImages(res.data.additionalImages || []);
-    } catch (e) {
-      console.warn('Failed to load profile', e);
+      const response = await profileAPI.getProfile();
+      const user = response.data;
+      setName(user.name || '');
+      setGender(user.gender || 'male');
+      setGenderPreference(user.genderPreference || 'any');
+      setBio(user.bio || '');
+      setProfileImage(user.profileImage || '');
+      setInterests(user.interests?.join(', ') || '');
+      setLocation(user.location || '');
+    } catch (error) {
+      console.error('Failed to load profile', error);
     }
   };
 
-  const pickImage = async (isProfile: boolean = true) => {
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    
-    if (permissionResult.granted === false) {
-      Alert.alert('Permission Required', 'Please allow access to your photos');
-      return;
-    }
-
+  const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
@@ -53,142 +48,186 @@ export default function ProfileScreen({ navigation }: any) {
       base64: true,
     });
 
-    if (!result.canceled && result.assets[0]) {
-      const imageUri = `data:image/jpeg;base64,${result.assets[0].base64}`;
-      
-      if (isProfile) {
-        setProfileImage(imageUri);
-      } else {
-        if (additionalImages.length < 5) {
-          setAdditionalImages([...additionalImages, imageUri]);
-        } else {
-          Alert.alert('Limit Reached', 'You can only add up to 5 additional photos');
-        }
-      }
+    if (!result.canceled && result.assets[0].base64) {
+      setProfileImage(`data:image/jpeg;base64,${result.assets[0].base64}`);
     }
   };
 
-  const removeAdditionalImage = (index: number) => {
-    setAdditionalImages(additionalImages.filter((_, i) => i !== index));
-  };
+  const handleSave = async () => {
+    if (!name || !gender || !genderPreference || !bio || bio.length < 20) {
+      Alert.alert('Incomplete Profile', 'Please fill all required fields. Bio must be at least 20 characters.');
+      return;
+    }
 
-  const onSave = async () => {
+    if (!profileImage) {
+      Alert.alert('Profile Image Required', 'Please upload a profile image.');
+      return;
+    }
+
     try {
       setLoading(true);
-      const token = await AsyncStorage.getItem('authToken');
+      const interestsArray = interests.split(',').map(i => i.trim()).filter(i => i);
       
-      await apiClient.put(
-        '/api/profile',
-        { 
-          name, 
-          gender, 
-          preferences, 
-          profileImage,
-          additionalImages 
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      
+      await profileAPI.updateProfile({
+        name,
+        gender,
+        genderPreference,
+        bio,
+        profileImage,
+        interests: interestsArray,
+        location,
+      });
+
+      // Update local storage
+      const userData = await AsyncStorage.getItem('userData');
+      if (userData) {
+        const user = JSON.parse(userData);
+        user.name = name;
+        user.gender = gender;
+        user.genderPreference = genderPreference;
+        user.bio = bio;
+        user.profileImage = profileImage;
+        await AsyncStorage.setItem('userData', JSON.stringify(user));
+      }
+
       Alert.alert('Success', 'Profile updated successfully');
-      await loadProfile();
-    } catch (e: any) {
-      Alert.alert('Error', e?.response?.data?.message || 'Failed to update profile');
+      navigation.goBack();
+    } catch (error) {
+      console.error('Failed to update profile', error);
+      Alert.alert('Error', 'Failed to update profile');
     } finally {
       setLoading(false);
     }
   };
 
-  const onLogout = async () => {
-    await AsyncStorage.removeItem('authToken');
+  const handleLogout = async () => {
+    await AsyncStorage.clear();
     navigation.replace('Welcome');
   };
+
+  const isProfileComplete = name && gender && genderPreference && profileImage && bio && bio.length >= 20;
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Profile</Text>
-        <View style={{ width: 40 }} />
+        <TouchableOpacity onPress={handleLogout}>
+          <Ionicons name="log-out-outline" size={24} color={theme.colors.error} />
+        </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <View style={styles.avatarContainer}>
-          <View style={styles.avatarWrapper}>
-            <Image
-              source={{ uri: profileImage || 'https://via.placeholder.com/150' }}
-              style={styles.avatar}
-            />
-            <TouchableOpacity style={styles.editAvatarButton} onPress={() => pickImage(true)}>
-              <Ionicons name="camera" size={20} color={theme.colors.white} />
-            </TouchableOpacity>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* Profile Completion Banner */}
+        {!isProfileComplete && (
+          <View style={styles.warningBanner}>
+            <Ionicons name="warning" size={20} color={theme.colors.warning} />
+            <Text style={styles.warningText}>
+              Complete your profile to join parties and find matches!
+            </Text>
           </View>
-        </View>
+        )}
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Additional Photos ({additionalImages.length}/5)</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imageGrid}>
-            {additionalImages.map((uri, index) => (
-              <View key={index} style={styles.additionalImageContainer}>
-                <Image source={{ uri }} style={styles.additionalImage} />
-                <TouchableOpacity
-                  style={styles.removeImageButton}
-                  onPress={() => removeAdditionalImage(index)}
-                >
-                  <Ionicons name="close-circle" size={24} color={theme.colors.error} />
-                </TouchableOpacity>
-              </View>
-            ))}
-            {additionalImages.length < 5 && (
-              <TouchableOpacity style={styles.addImageButton} onPress={() => pickImage(false)}>
-                <Ionicons name="add" size={32} color={theme.colors.textLight} />
-                <Text style={styles.addImageText}>Add Photo</Text>
-              </TouchableOpacity>
-            )}
-          </ScrollView>
-        </View>
-
-        <View style={styles.formContainer}>
-          <InputField
-            label="Full Name"
-            value={name}
-            onChangeText={setName}
-            placeholder="Your name"
-            icon="person"
-          />
-
-          <View style={styles.genderContainer}>
-            <Text style={styles.label}>Gender</Text>
-            <View style={styles.genderButtons}>
-              {['male', 'female', 'other'].map((g) => (
-                <TouchableOpacity
-                  key={g}
-                  onPress={() => setGender(g)}
-                  style={[styles.genderButton, gender === g && styles.genderButtonActive]}
-                >
-                  <Text style={[styles.genderText, gender === g && styles.genderTextActive]}>
-                    {g.charAt(0).toUpperCase() + g.slice(1)}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+        {/* Profile Image */}
+        <TouchableOpacity style={styles.imageContainer} onPress={pickImage}>
+          {profileImage ? (
+            <Image source={{ uri: profileImage }} style={styles.profileImage} />
+          ) : (
+            <View style={styles.imagePlaceholder}>
+              <Ionicons name="camera" size={40} color={theme.colors.textLight} />
+              <Text style={styles.imagePlaceholderText}>Add Photo *</Text>
             </View>
+          )}
+        </TouchableOpacity>
+
+        {/* Name */}
+        <InputField
+          label="Name *"
+          value={name}
+          onChangeText={setName}
+          placeholder="Your name"
+          icon="person"
+        />
+
+        {/* Gender */}
+        <View style={styles.fieldContainer}>
+          <Text style={styles.label}>Gender *</Text>
+          <View style={styles.buttonGroup}>
+            {['male', 'female', 'other'].map((g) => (
+              <TouchableOpacity
+                key={g}
+                style={[styles.optionButton, gender === g && styles.optionButtonActive]}
+                onPress={() => setGender(g as any)}
+              >
+                <Text style={[styles.optionText, gender === g && styles.optionTextActive]}>
+                  {g.charAt(0).toUpperCase() + g.slice(1)}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
-
-          <InputField
-            label="Preferences"
-            value={preferences}
-            onChangeText={setPreferences}
-            placeholder="What are you looking for?"
-            icon="heart"
-          />
-
-          <PrimaryButton title="Save Changes" onPress={onSave} loading={loading} />
-
-          <TouchableOpacity onPress={onLogout} style={styles.logoutButton}>
-            <Text style={styles.logoutText}>Logout</Text>
-          </TouchableOpacity>
         </View>
+
+        {/* Gender Preference */}
+        <View style={styles.fieldContainer}>
+          <Text style={styles.label}>Looking for *</Text>
+          <View style={styles.buttonGroup}>
+            {[
+              { value: 'male', label: 'Men' },
+              { value: 'female', label: 'Women' },
+              { value: 'other', label: 'Other' },
+              { value: 'any', label: 'Anyone' },
+            ].map((pref) => (
+              <TouchableOpacity
+                key={pref.value}
+                style={[styles.optionButton, genderPreference === pref.value && styles.optionButtonActive]}
+                onPress={() => setGenderPreference(pref.value as any)}
+              >
+                <Text style={[styles.optionText, genderPreference === pref.value && styles.optionTextActive]}>
+                  {pref.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        {/* Bio */}
+        <InputField
+          label="Bio * (min 20 characters)"
+          value={bio}
+          onChangeText={setBio}
+          placeholder="Tell others about yourself..."
+          multiline
+          numberOfLines={4}
+          icon="document-text"
+        />
+        <Text style={styles.charCount}>{bio.length}/20 characters</Text>
+
+        {/* Interests */}
+        <InputField
+          label="Interests (comma separated)"
+          value={interests}
+          onChangeText={setInterests}
+          placeholder="e.g., Music, Sports, Travel"
+          icon="star"
+        />
+
+        {/* Location */}
+        <InputField
+          label="Location"
+          value={location}
+          onChangeText={setLocation}
+          placeholder="Your city"
+          icon="location"
+        />
+
+        <PrimaryButton
+          title="Save Profile"
+          onPress={handleSave}
+          loading={loading}
+          style={styles.saveButton}
+        />
       </ScrollView>
     </SafeAreaView>
   );
@@ -208,97 +247,57 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.white,
     ...theme.shadows.card,
   },
-  backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-  },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700',
     color: theme.colors.text,
   },
   scrollContent: {
     padding: theme.spacing.lg,
   },
-  avatarContainer: {
+  warningBanner: {
+    flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#FFF3CD',
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    marginBottom: theme.spacing.lg,
+    gap: theme.spacing.sm,
+  },
+  warningText: {
+    flex: 1,
+    fontSize: 14,
+    color: '#856404',
+    fontWeight: '600',
+  },
+  imageContainer: {
+    alignSelf: 'center',
     marginBottom: theme.spacing.xl,
   },
-  avatarWrapper: {
-    position: 'relative',
-  },
-  avatar: {
+  profileImage: {
     width: 120,
     height: 120,
     borderRadius: 60,
     backgroundColor: theme.colors.bg,
-    borderWidth: 4,
-    borderColor: theme.colors.white,
   },
-  editAvatarButton: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: theme.colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 3,
-    borderColor: theme.colors.white,
-  },
-  section: {
-    marginBottom: theme.spacing.xl,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: theme.colors.text,
-    marginBottom: theme.spacing.md,
-  },
-  imageGrid: {
-    flexDirection: 'row',
-  },
-  additionalImageContainer: {
-    position: 'relative',
-    marginRight: theme.spacing.sm,
-  },
-  additionalImage: {
-    width: 100,
-    height: 100,
-    borderRadius: theme.borderRadius.md,
+  imagePlaceholder: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
     backgroundColor: theme.colors.bg,
-  },
-  removeImageButton: {
-    position: 'absolute',
-    top: -8,
-    right: -8,
-    backgroundColor: theme.colors.white,
-    borderRadius: 12,
-  },
-  addImageButton: {
-    width: 100,
-    height: 100,
-    borderRadius: theme.borderRadius.md,
-    backgroundColor: theme.colors.white,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
+    borderColor: theme.colors.border,
     borderStyle: 'dashed',
-    borderColor: theme.colors.textLight,
   },
-  addImageText: {
+  imagePlaceholderText: {
+    marginTop: theme.spacing.xs,
     fontSize: 12,
     color: theme.colors.textLight,
-    marginTop: 4,
   },
-  formContainer: {
-    gap: theme.spacing.md,
-  },
-  genderContainer: {
-    marginBottom: theme.spacing.md,
+  fieldContainer: {
+    marginBottom: theme.spacing.lg,
   },
   label: {
     fontSize: 14,
@@ -306,36 +305,40 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
     marginBottom: theme.spacing.sm,
   },
-  genderButtons: {
+  buttonGroup: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: theme.spacing.sm,
   },
-  genderButton: {
-    flex: 1,
-    paddingVertical: 12,
-    backgroundColor: theme.colors.white,
+  optionButton: {
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
     borderRadius: theme.borderRadius.md,
-    alignItems: 'center',
-    ...theme.shadows.card,
+    backgroundColor: theme.colors.white,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
   },
-  genderButtonActive: {
+  optionButtonActive: {
     backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
   },
-  genderText: {
+  optionText: {
+    fontSize: 14,
     color: theme.colors.text,
     fontWeight: '600',
   },
-  genderTextActive: {
+  optionTextActive: {
     color: theme.colors.white,
   },
-  logoutButton: {
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginTop: theme.spacing.md,
+  charCount: {
+    fontSize: 12,
+    color: theme.colors.textLight,
+    marginTop: -theme.spacing.sm,
+    marginBottom: theme.spacing.md,
+    textAlign: 'right',
   },
-  logoutText: {
-    color: theme.colors.error,
-    fontWeight: '600',
-    fontSize: 16,
+  saveButton: {
+    marginTop: theme.spacing.lg,
+    marginBottom: theme.spacing.xxl,
   },
 });

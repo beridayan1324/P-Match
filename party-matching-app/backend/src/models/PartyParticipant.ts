@@ -1,28 +1,70 @@
 import { DataTypes, Model } from 'sequelize';
 import sequelize from '../db';
-import User from './User';
-import Party from './Party';
 
-class PartyParticipant extends Model {
+interface PartyParticipantAttributes {
+  id?: string;
+  userId: string;
+  partyId: string;
+  joinedAt?: Date;
+  optIn?: boolean;
+}
+
+class PartyParticipant extends Model<PartyParticipantAttributes> implements PartyParticipantAttributes {
   public id!: string;
   public userId!: string;
   public partyId!: string;
+  public joinedAt!: Date;
   public optIn!: boolean;
+  
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
 }
 
-PartyParticipant.init({
-  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
-  userId: { type: DataTypes.UUID, allowNull: false },
-  partyId: { type: DataTypes.UUID, allowNull: false },
-  optIn: { type: DataTypes.BOOLEAN, defaultValue: false },
-}, {
-  sequelize,
-  modelName: 'PartyParticipant',
-  tableName: 'party_participants',
-  timestamps: true,
-});
-
-User.belongsToMany(Party, { through: PartyParticipant, foreignKey: 'userId' });
-Party.belongsToMany(User, { through: PartyParticipant, foreignKey: 'partyId' });
+PartyParticipant.init(
+  {
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true,
+    },
+    userId: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      references: {
+        model: 'users',
+        key: 'id',
+      },
+      onDelete: 'CASCADE',
+    },
+    partyId: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      references: {
+        model: 'parties',
+        key: 'id',
+      },
+      onDelete: 'CASCADE',
+    },
+    joinedAt: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+    },
+    optIn: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
+    },
+  },
+  {
+    sequelize,
+    tableName: 'party_participants',
+    timestamps: true,
+    indexes: [
+      {
+        unique: true,
+        fields: ['userId', 'partyId'],
+      },
+    ],
+  }
+);
 
 export default PartyParticipant;

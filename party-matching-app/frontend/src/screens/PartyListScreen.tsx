@@ -14,22 +14,21 @@ export default function PartyListScreen({ navigation }: any) {
   useEffect(() => {
     loadUserData();
     loadParties();
-  }, []);
+    
+    // Refresh when screen comes into focus
+    const unsubscribe = navigation.addListener('focus', () => {
+      loadParties();
+    });
+    
+    return unsubscribe;
+  }, [navigation]);
 
   const loadUserData = async () => {
     try {
       const userData = await AsyncStorage.getItem('userData');
-      console.log('Raw userData from storage:', userData);
-      
       if (userData) {
         const user = JSON.parse(userData);
-        console.log('Parsed user:', user);
-        console.log('isAdmin value:', user.isAdmin);
-        
         setIsAdmin(user.isAdmin || false);
-        console.log('Set isAdmin to:', user.isAdmin || false);
-      } else {
-        console.log('No userData found in storage');
       }
     } catch (error) {
       console.error('Error loading user data:', error);
@@ -56,6 +55,13 @@ export default function PartyListScreen({ navigation }: any) {
       style={styles.partyCard}
       onPress={() => navigation.navigate('PartyDetails', { party: item })}
     >
+      {item.hasJoined && (
+        <View style={styles.joinedBadge}>
+          <Ionicons name="checkmark-circle" size={16} color={theme.colors.white} />
+          <Text style={styles.joinedBadgeText}>Joined</Text>
+        </View>
+      )}
+      
       <Image 
         source={{ uri: item.image || 'https://via.placeholder.com/400x200' }}
         style={styles.partyImage}
@@ -84,8 +90,6 @@ export default function PartyListScreen({ navigation }: any) {
     </TouchableOpacity>
   );
 
-  console.log('Rendering PartyListScreen, isAdmin:', isAdmin);
-
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -94,10 +98,7 @@ export default function PartyListScreen({ navigation }: any) {
           {isAdmin && (
             <TouchableOpacity 
               style={styles.adminButton}
-              onPress={() => {
-                console.log('Admin button pressed!');
-                navigation.navigate('AdminPanel');
-              }}
+              onPress={() => navigation.navigate('AdminPanel')}
             >
               <Ionicons name="add-circle" size={32} color={theme.colors.primary} />
             </TouchableOpacity>
@@ -106,11 +107,6 @@ export default function PartyListScreen({ navigation }: any) {
             <Ionicons name="person-circle-outline" size={32} color={theme.colors.primary} />
           </TouchableOpacity>
         </View>
-      </View>
-
-      {/* Debug info - remove later */}
-      <View style={{ padding: 10, backgroundColor: '#ffeb3b' }}>
-        <Text>Debug: isAdmin = {isAdmin ? 'TRUE' : 'FALSE'}</Text>
       </View>
 
       <FlatList
@@ -171,6 +167,25 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.lg,
     overflow: 'hidden',
     ...theme.shadows.card,
+    position: 'relative',
+  },
+  joinedBadge: {
+    position: 'absolute',
+    top: theme.spacing.md,
+    right: theme.spacing.md,
+    backgroundColor: '#FF1493',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: theme.spacing.xs,
+    paddingHorizontal: theme.spacing.sm,
+    borderRadius: theme.borderRadius.sm,
+    zIndex: 10,
+    gap: theme.spacing.xs,
+  },
+  joinedBadgeText: {
+    color: theme.colors.white,
+    fontSize: 12,
+    fontWeight: '700',
   },
   partyImage: {
     width: '100%',

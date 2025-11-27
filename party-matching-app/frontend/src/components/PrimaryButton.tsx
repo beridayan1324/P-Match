@@ -1,49 +1,48 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, ViewStyle } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../theme/theme';
 
-interface Props {
+interface PrimaryButtonProps {
   title: string;
   onPress: () => void;
   loading?: boolean;
-  disabled?: boolean;
-  style?: any;
+  style?: ViewStyle;
+  icon?: string;
 }
 
-export default function PrimaryButton({ title, onPress, loading, disabled, style }: Props) {
+export default function PrimaryButton({ title, onPress, loading, style, icon }: PrimaryButtonProps) {
   return (
-    <TouchableOpacity onPress={onPress} disabled={disabled || loading} style={[styles.container, style]}>
-      <LinearGradient
-        colors={[theme.colors.primary, theme.colors.primaryLight]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={[styles.gradient, disabled && styles.disabled]}
-      >
-        {loading ? (
-          <ActivityIndicator color={theme.colors.white} />
-        ) : (
+    <TouchableOpacity 
+      style={[styles.button, style]} 
+      onPress={onPress}
+      disabled={loading}
+    >
+      {loading ? (
+        <ActivityIndicator color={theme.colors.white} />
+      ) : (
+        <>
+          {icon && <Ionicons name={icon as any} size={20} color={theme.colors.white} style={styles.icon} />}
           <Text style={styles.text}>{title}</Text>
-        )}
-      </LinearGradient>
+        </>
+      )}
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    borderRadius: theme.borderRadius.lg,
-    overflow: 'hidden',
-    ...theme.shadows.button,
-  },
-  gradient: {
-    paddingVertical: 16,
-    paddingHorizontal: 32,
+  button: {
+    backgroundColor: theme.colors.primary,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    borderRadius: theme.borderRadius.md,
     alignItems: 'center',
     justifyContent: 'center',
+    flexDirection: 'row',
+    ...theme.shadows.card,
   },
-  disabled: {
-    opacity: 0.5,
+  icon: {
+    marginRight: theme.spacing.xs,
   },
   text: {
     color: theme.colors.white,

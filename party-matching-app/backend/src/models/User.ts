@@ -8,7 +8,7 @@ interface UserAttributes {
   password: string;
   isAdmin?: boolean;
   gender?: 'male' | 'female' | 'other';
-  preferences?: string;
+  genderPreference?: 'male' | 'female' | 'other' | 'any';
   profileImage?: string;
   additionalImages?: string[];
   bio?: string;
@@ -23,7 +23,7 @@ class User extends Model<UserAttributes> implements UserAttributes {
   public password!: string;
   public isAdmin!: boolean;
   public gender?: 'male' | 'female' | 'other';
-  public preferences?: string;
+  public genderPreference?: 'male' | 'female' | 'other' | 'any';
   public profileImage?: string;
   public additionalImages?: string[];
   public bio?: string;
@@ -65,9 +65,10 @@ User.init(
       type: DataTypes.ENUM('male', 'female', 'other'),
       allowNull: true,
     },
-    preferences: {
-      type: DataTypes.TEXT,
+    genderPreference: {
+      type: DataTypes.ENUM('male', 'female', 'other', 'any'),
       allowNull: true,
+      defaultValue: 'any',
     },
     profileImage: {
       type: DataTypes.TEXT('long'),
