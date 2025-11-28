@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
   shape: {
     position: 'absolute',
     backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: theme.borderRadius.full,
+    borderRadius: 99999,
   },
   shape1: {
     width: 100,

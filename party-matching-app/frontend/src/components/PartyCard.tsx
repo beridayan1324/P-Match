@@ -55,7 +55,7 @@ export default function PartyCard({ party, onPress }: Props) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: theme.colors.cardBg,
+    backgroundColor: theme.colors.white,
     borderRadius: theme.borderRadius.lg,
     marginHorizontal: theme.spacing.md,
     marginVertical: theme.spacing.sm,

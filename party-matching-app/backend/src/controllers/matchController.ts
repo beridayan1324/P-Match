@@ -25,21 +25,29 @@ export const runMatchingForParty = async (partyId: string) => {
   for (const [male, female] of pairs) {
     await Match.create({
       partyId,
-      userAId: male.id,
-      userBId: female.id,
-      acceptedA: false,
-      acceptedB: false,
-      status: 'pending'
+      user1Id: male.id,
+      user2Id: female.id,
+      user1Status: 'pending',
+      user2Status: 'pending',
+      mutualMatch: false,
     });
   }
 };
 
 export const getMatchPreview = async (req: Request, res: Response) => {
   const userId = (req as any).userId;
-  const match = await Match.findOne({ where: { [Op.or]: [{ userAId: userId }, { userBId: userId }], status: 'pending' } });
+  const match = await Match.findOne({ 
+    where: { 
+      [Op.and]: [
+        { [Op.or]: [{ user1Id: userId }, { user2Id: userId }] },
+        { [Op.or]: [{ user1Status: 'pending' }, { user2Status: 'pending' }] }
+      ]
+    } 
+  });
+  
   if (!match) return res.status(404).json({ message: 'No match' });
 
-  const otherId = match.userAId === userId ? match.userBId : match.userAId;
+  const otherId = match.user1Id === userId ? match.user2Id : match.user1Id;
   const other = await User.findByPk(otherId);
   return res.json({ matchId: match.id, other: { id: other?.id, name: other?.name, profileImage: other?.profileImage } });
 };
@@ -51,11 +59,48 @@ export const respondToMatch = async (req: Request, res: Response) => {
   const match = await Match.findByPk(matchId);
   if (!match) return res.status(404).json({ message: 'Not found' });
 
-  if (match.userAId === userId) match.acceptedA = !!accept;
-  if (match.userBId === userId) match.acceptedB = !!accept;
-  if (match.acceptedA && match.acceptedB) match.status = 'confirmed';
-  if (!match.acceptedA && !match.acceptedB && (match.acceptedA === false || match.acceptedB === false)) match.status = 'declined';
+  // Update user's status
+  if (match.user1Id === userId) {
+    match.user1Status = accept ? 'accepted' : 'rejected';
+  }
+  if (match.user2Id === userId) {
+    match.user2Status = accept ? 'accepted' : 'rejected';
+  }
+  
+  // Check if both accepted
+  if (match.user1Status === 'accepted' && match.user2Status === 'accepted') {
+    match.mutualMatch = true;
+  }
 
   await match.save();
   return res.json(match);
+};
+
+export const getMyMatches = async (req: any, res: Response) => {
+  try {
+    const userId = req.userId;
+
+    const matches = await Match.findAll({
+      where: {
+        [Op.or]: [{ user1Id: userId }, { user2Id: userId }],
+      },
+      include: [
+        {
+          model: User,
+          as: 'user1',
+          attributes: ['id', 'name', 'profileImage', 'bio', 'interests'],
+        },
+        {
+          model: User,
+          as: 'user2',
+          attributes: ['id', 'name', 'profileImage', 'bio', 'interests'],
+        },
+      ],
+    });
+
+    res.json({ matches });
+  } catch (error) {
+    console.error('Get matches error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
 };
