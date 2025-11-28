@@ -10,7 +10,8 @@ import { theme } from '../theme/theme';
 import { profileAPI } from '../services/api';
 
 export default function ProfileScreen({ navigation }: any) {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [name, setName] = useState('');
   const [gender, setGender] = useState<'male' | 'female' | 'other'>('male');
   const [genderPreference, setGenderPreference] = useState<'male' | 'female' | 'other' | 'any'>('any');
@@ -25,17 +26,44 @@ export default function ProfileScreen({ navigation }: any) {
 
   const loadProfile = async () => {
     try {
+      setLoading(true);
       const response = await profileAPI.getProfile();
-      const user = response.data;
+      
+      console.log('Profile response:', response.data);
+      
+      // The API returns user data directly in response.data, not response.data.user
+      const user = response.data.user || response.data;
+      
+      if (!user || !user.name) {
+        throw new Error('Invalid profile data received');
+      }
+      
       setName(user.name || '');
       setGender(user.gender || 'male');
       setGenderPreference(user.genderPreference || 'any');
       setBio(user.bio || '');
       setProfileImage(user.profileImage || '');
-      setInterests(user.interests?.join(', ') || '');
+      
+      // Parse interests if it's a string
+      if (typeof user.interests === 'string') {
+        try {
+          const parsedInterests = JSON.parse(user.interests);
+          setInterests(Array.isArray(parsedInterests) ? parsedInterests.join(', ') : '');
+        } catch (e) {
+          setInterests('');
+        }
+      } else if (Array.isArray(user.interests)) {
+        setInterests(user.interests.join(', '));
+      } else {
+        setInterests('');
+      }
+      
       setLocation(user.location || '');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to load profile', error);
+      Alert.alert('Error', error.message || 'Failed to load profile');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -65,7 +93,7 @@ export default function ProfileScreen({ navigation }: any) {
     }
 
     try {
-      setLoading(true);
+      setSaving(true);
       const interestsArray = interests.split(',').map(i => i.trim()).filter(i => i);
       
       await profileAPI.updateProfile({
@@ -96,7 +124,7 @@ export default function ProfileScreen({ navigation }: any) {
       console.error('Failed to update profile', error);
       Alert.alert('Error', 'Failed to update profile');
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
@@ -106,6 +134,16 @@ export default function ProfileScreen({ navigation }: any) {
   };
 
   const isProfileComplete = name && gender && genderPreference && profileImage && bio && bio.length >= 20;
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Loading profile...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -174,7 +212,7 @@ export default function ProfileScreen({ navigation }: any) {
           <Text style={styles.label}>Looking for *</Text>
           <View style={styles.buttonGroup}>
             {[
-              { value: 'male', label: 'Men' },
+              {value: 'male', label: 'Men' },
               { value: 'female', label: 'Women' },
               { value: 'other', label: 'Other' },
               { value: 'any', label: 'Anyone' },
@@ -225,7 +263,7 @@ export default function ProfileScreen({ navigation }: any) {
         <PrimaryButton
           title="Save Profile"
           onPress={handleSave}
-          loading={loading}
+          loading={saving}
           style={styles.saveButton}
         />
       </ScrollView>
@@ -237,6 +275,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.bg,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 16,
+    color: theme.colors.textLight,
   },
   header: {
     flexDirection: 'row',

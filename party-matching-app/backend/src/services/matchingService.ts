@@ -123,7 +123,9 @@ export class MatchingService {
           partyId,
           user1Id: user.id,
           user2Id: matchedUser.id,
-          status: 'pending',
+          user1Status: 'pending',
+          user2Status: 'pending',
+          mutualMatch: false,
         });
         
         console.log(`✓ Created match: ${user.name} ↔ ${matchedUser.name}`);

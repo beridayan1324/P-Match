@@ -170,19 +170,87 @@ export const getUserMatches = async (req: any, res: Response) => {
       },
     });
     
-    // Get matched user details
-    const matchedUserIds = matches.map(m => 
-      m.user1Id === userId ? m.user2Id : m.user1Id
+    // Get matched user details with their status
+    const matchesWithUsers = await Promise.all(
+      matches.map(async (match) => {
+        const isUser1 = match.user1Id === userId;
+        const otherUserId = isUser1 ? match.user2Id : match.user1Id;
+        const myStatus = isUser1 ? match.user1Status : match.user2Status;
+        const theirStatus = isUser1 ? match.user2Status : match.user1Status;
+        
+        const otherUser = await User.findByPk(otherUserId, {
+          attributes: { exclude: ['password'] },
+        });
+
+        // Parse interests if it's a string
+        if (otherUser && typeof otherUser.interests === 'string') {
+          try {
+            otherUser.interests = JSON.parse(otherUser.interests as string) as any;
+          } catch (e) {
+            otherUser.interests = [] as any;
+          }
+        }
+        
+        return {
+          matchId: match.id,
+          user: otherUser,
+          myStatus,
+          theirStatus,
+          mutualMatch: match.mutualMatch,
+        };
+      })
     );
     
-    const matchedUsers = await User.findAll({
-      where: { id: matchedUserIds },
-      attributes: { exclude: ['password'] },
-    });
-    
-    res.json({ matches: matchedUsers });
+    res.json({ matches: matchesWithUsers });
   } catch (error) {
     console.error('Get matches error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const respondToMatch = async (req: any, res: Response) => {
+  try {
+    const userId = req.userId;
+    const { matchId } = req.params;
+    const { action } = req.body; // 'accept' or 'reject'
+    
+    if (!['accept', 'reject'].includes(action)) {
+      return res.status(400).json({ message: 'Invalid action' });
+    }
+    
+    const match = await Match.findByPk(matchId);
+    if (!match) {
+      return res.status(404).json({ message: 'Match not found' });
+    }
+    
+    // Check if user is part of this match
+    const isUser1 = match.user1Id === userId;
+    const isUser2 = match.user2Id === userId;
+    
+    if (!isUser1 && !isUser2) {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+    
+    // Update status
+    if (isUser1) {
+      match.user1Status = action === 'accept' ? 'accepted' : 'rejected';
+    } else {
+      match.user2Status = action === 'accept' ? 'accepted' : 'rejected';
+    }
+    
+    // Check for mutual match
+    if (match.user1Status === 'accepted' && match.user2Status === 'accepted') {
+      match.mutualMatch = true;
+    }
+    
+    await match.save();
+    
+    res.json({ 
+      message: `Match ${action}ed successfully`,
+      mutualMatch: match.mutualMatch,
+    });
+  } catch (error) {
+    console.error('Respond to match error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };

@@ -65,3 +65,32 @@ export const login = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
+export const getProfile = async (req: any, res: Response) => {
+  try {
+    const userId = req.userId;
+    
+    const user = await User.findByPk(userId, {
+      attributes: { exclude: ['password'] },
+    });
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Parse interests if it's a string
+    let userData = user.toJSON();
+    if (typeof userData.interests === 'string') {
+      try {
+        userData.interests = JSON.parse(userData.interests);
+      } catch (e) {
+        userData.interests = [];
+      }
+    }
+    
+    res.json({ user: userData });
+  } catch (error) {
+    console.error('Get profile error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};

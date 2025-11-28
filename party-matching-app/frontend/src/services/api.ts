@@ -73,4 +73,6 @@ export const partyAPI = {
   joinParty: (partyId: string) => apiClient.post(`/api/party/${partyId}/join`),
   getParticipants: (partyId: string) => apiClient.get(`/api/party/${partyId}/participants`),
   getMatches: (partyId: string) => apiClient.get(`/api/party/${partyId}/matches`),
+  respondToMatch: (matchId: string, action: 'accept' | 'reject') => 
+    apiClient.post(`/api/party/match/${matchId}/respond`, { action }),
 };

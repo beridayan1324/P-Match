@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../theme/theme';
@@ -7,8 +7,9 @@ import { partyAPI } from '../services/api';
 
 export default function MatchesListScreen({ route, navigation }: any) {
   const { partyId } = route.params;
-  const [matches, setMatches] = useState<any[]>([]);
+  const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     loadMatches();
@@ -16,43 +17,106 @@ export default function MatchesListScreen({ route, navigation }: any) {
 
   const loadMatches = async () => {
     try {
-      setLoading(true);
       const response = await partyAPI.getMatches(partyId);
-      setMatches(response.data.matches);
+      
+      // Parse interests for each match
+      const matchesWithParsedInterests = response.data.matches.map((match: any) => {
+        if (match.user && typeof match.user.interests === 'string') {
+          try {
+            match.user.interests = JSON.parse(match.user.interests);
+          } catch (e) {
+            match.user.interests = [];
+          }
+        }
+        return match;
+      });
+      
+      setMatches(matchesWithParsedInterests);
     } catch (error) {
       console.error('Failed to load matches', error);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
-  const renderMatch = ({ item }: any) => (
-    <TouchableOpacity 
-      style={styles.matchCard}
-      onPress={() => navigation.navigate('MatchPreview', { match: item })}
-    >
-      <Image 
-        source={{ uri: item.profileImage || 'https://via.placeholder.com/80' }}
-        style={styles.matchImage}
-      />
-      <View style={styles.matchInfo}>
-        <Text style={styles.matchName}>{item.name}</Text>
-        {item.bio && (
-          <Text style={styles.matchBio} numberOfLines={2}>{item.bio}</Text>
-        )}
-        {item.interests && item.interests.length > 0 && (
-          <View style={styles.interestsContainer}>
-            {item.interests.slice(0, 3).map((interest: string, index: number) => (
-              <View key={index} style={styles.interestTag}>
-                <Text style={styles.interestText}>{interest}</Text>
-              </View>
-            ))}
+  const onRefresh = () => {
+    setRefreshing(true);
+    loadMatches();
+  };
+
+  const renderMatch = ({ item }: any) => {
+    const statusIcon = item.mutualMatch 
+      ? 'heart' 
+      : item.myStatus === 'accepted' 
+        ? 'time' 
+        : item.myStatus === 'rejected'
+          ? 'close-circle'
+          : 'help-circle';
+    
+    const statusColor = item.mutualMatch 
+      ? theme.colors.success 
+      : item.myStatus === 'accepted' 
+        ? theme.colors.warning 
+        : item.myStatus === 'rejected'
+          ? theme.colors.error
+          : theme.colors.textLight;
+
+    return (
+      <TouchableOpacity 
+        style={styles.matchCard}
+        onPress={() => navigation.navigate('MatchPreview', { 
+          match: item, 
+          partyId,
+          onMatchUpdate: loadMatches // Pass the refresh function
+        })}
+      >
+        <Image 
+          source={{ uri: item.user.profileImage || 'https://via.placeholder.com/80' }}
+          style={styles.matchImage}
+        />
+        <View style={styles.matchInfo}>
+          <Text style={styles.matchName}>{item.user.name}</Text>
+          {item.user.bio && (
+            <Text style={styles.matchBio} numberOfLines={2}>{item.user.bio}</Text>
+          )}
+          
+          {/* Interests */}
+          {item.user.interests && Array.isArray(item.user.interests) && item.user.interests.length > 0 && (
+            <View style={styles.interestsContainer}>
+              {item.user.interests.slice(0, 3).map((interest: string, index: number) => (
+                <View key={`match-${item.matchId}-interest-${index}`} style={styles.interestTag}>
+                  <Text style={styles.interestText}>{interest}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+
+          <View style={styles.statusRow}>
+            <Ionicons name={statusIcon} size={16} color={statusColor} />
+            <Text style={[styles.statusText, { color: statusColor }]}>
+              {item.mutualMatch 
+                ? 'Mutual Match!' 
+                : item.myStatus === 'accepted' 
+                  ? 'Waiting for response' 
+                  : item.myStatus === 'rejected'
+                    ? 'Declined'
+                    : 'New match'}
+            </Text>
           </View>
-        )}
-      </View>
-      <Ionicons name="chevron-forward" size={24} color={theme.colors.textLight} />
-    </TouchableOpacity>
-  );
+        </View>
+        <Ionicons name="chevron-forward" size={24} color={theme.colors.textLight} />
+      </TouchableOpacity>
+    );
+  };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Text style={styles.loadingText}>Loading matches...</Text>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -64,36 +128,22 @@ export default function MatchesListScreen({ route, navigation }: any) {
         <View style={{ width: 24 }} />
       </View>
 
-      {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
-          <Text style={styles.loadingText}>Loading your matches...</Text>
-        </View>
-      ) : matches.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Ionicons name="heart-dislike-outline" size={80} color={theme.colors.textLight} />
-          <Text style={styles.emptyTitle}>No Matches Yet</Text>
-          <Text style={styles.emptyText}>
-            Matching hasn't started yet or there weren't enough participants.
-          </Text>
-        </View>
-      ) : (
-        <>
-          <View style={styles.banner}>
-            <Ionicons name="people" size={24} color={theme.colors.primary} />
-            <Text style={styles.bannerText}>
-              You have {matches.length} {matches.length === 1 ? 'match' : 'matches'}!
-            </Text>
+      <FlatList
+        data={matches}
+        renderItem={renderMatch}
+        keyExtractor={(item: any) => item.matchId}
+        contentContainerStyle={styles.list}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Ionicons name="heart-dislike-outline" size={64} color={theme.colors.textLight} />
+            <Text style={styles.emptyText}>No matches yet</Text>
+            <Text style={styles.emptySubtext}>Check back later!</Text>
           </View>
-          
-          <FlatList
-            data={matches}
-            renderItem={renderMatch}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.listContent}
-          />
-        </>
-      )}
+        }
+      />
     </SafeAreaView>
   );
 }
@@ -117,72 +167,27 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: theme.colors.text,
   },
-  banner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: theme.colors.primaryLight,
-    padding: theme.spacing.md,
-    marginHorizontal: theme.spacing.lg,
-    marginTop: theme.spacing.lg,
-    borderRadius: theme.borderRadius.md,
-    gap: theme.spacing.sm,
-  },
-  bannerText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.primary,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: theme.spacing.md,
-  },
-  loadingText: {
-    fontSize: 16,
-    color: theme.colors.textLight,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: theme.spacing.xxl,
-  },
-  emptyTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: theme.colors.text,
-    marginTop: theme.spacing.lg,
-    marginBottom: theme.spacing.sm,
-  },
-  emptyText: {
-    fontSize: 16,
-    color: theme.colors.textLight,
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-  listContent: {
+  list: {
     padding: theme.spacing.lg,
   },
   matchCard: {
     flexDirection: 'row',
-    alignItems: 'center',
     backgroundColor: theme.colors.white,
     padding: theme.spacing.md,
-    borderRadius: theme.borderRadius.lg,
+    borderRadius: theme.borderRadius.md,
     marginBottom: theme.spacing.md,
+    alignItems: 'center',
     ...theme.shadows.card,
   },
   matchImage: {
     width: 80,
     height: 80,
     borderRadius: 40,
+    marginRight: theme.spacing.md,
     backgroundColor: theme.colors.bg,
   },
   matchInfo: {
     flex: 1,
-    marginLeft: theme.spacing.md,
   },
   matchName: {
     fontSize: 18,
@@ -193,24 +198,55 @@ const styles = StyleSheet.create({
   matchBio: {
     fontSize: 14,
     color: theme.colors.textLight,
-    lineHeight: 20,
     marginBottom: theme.spacing.xs,
   },
   interestsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: theme.spacing.xs,
-    marginTop: theme.spacing.xs,
+    marginBottom: theme.spacing.xs,
   },
   interestTag: {
     backgroundColor: theme.colors.primaryLight,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
+    paddingVertical: 2,
+    paddingHorizontal: theme.spacing.xs,
     borderRadius: theme.borderRadius.sm,
   },
   interestText: {
-    fontSize: 11,
+    fontSize: 10,
     color: theme.colors.primary,
     fontWeight: '600',
+  },
+  statusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: theme.spacing.xs,
+    gap: theme.spacing.xs,
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  loadingText: {
+    textAlign: 'center',
+    marginTop: theme.spacing.xl,
+    fontSize: 16,
+    color: theme.colors.textLight,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: theme.spacing.xxl * 2,
+  },
+  emptyText: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: theme.colors.text,
+    marginTop: theme.spacing.lg,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: theme.colors.textLight,
+    marginTop: theme.spacing.xs,
   },
 });

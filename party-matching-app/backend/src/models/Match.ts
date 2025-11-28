@@ -6,7 +6,9 @@ interface MatchAttributes {
   partyId: string;
   user1Id: string;
   user2Id: string;
-  status?: 'pending' | 'accepted' | 'rejected';
+  user1Status?: 'pending' | 'accepted' | 'rejected';
+  user2Status?: 'pending' | 'accepted' | 'rejected';
+  mutualMatch?: boolean;
 }
 
 class Match extends Model<MatchAttributes> implements MatchAttributes {
@@ -14,7 +16,9 @@ class Match extends Model<MatchAttributes> implements MatchAttributes {
   public partyId!: string;
   public user1Id!: string;
   public user2Id!: string;
-  public status!: 'pending' | 'accepted' | 'rejected';
+  public user1Status!: 'pending' | 'accepted' | 'rejected';
+  public user2Status!: 'pending' | 'accepted' | 'rejected';
+  public mutualMatch!: boolean;
   
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -54,9 +58,17 @@ Match.init(
       },
       onDelete: 'CASCADE',
     },
-    status: {
+    user1Status: {
       type: DataTypes.ENUM('pending', 'accepted', 'rejected'),
       defaultValue: 'pending',
+    },
+    user2Status: {
+      type: DataTypes.ENUM('pending', 'accepted', 'rejected'),
+      defaultValue: 'pending',
+    },
+    mutualMatch: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
     },
   },
   {

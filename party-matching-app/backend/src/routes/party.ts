@@ -7,7 +7,8 @@ import {
   joinParty, 
   getPartyParticipants,
   getUserMatches,
-  toggleOptIn 
+  toggleOptIn,
+  respondToMatch
 } from '../controllers/partyController';
 
 const router = Router();
@@ -29,5 +30,8 @@ router.get('/:partyId/matches', authenticate, getUserMatches);
 
 // Toggle opt-in
 router.post('/:partyId/opt-in', authenticate, toggleOptIn);
+
+// Accept/Reject match
+router.post('/match/:matchId/respond', authenticate, respondToMatch);
 
 export default router;
