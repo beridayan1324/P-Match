@@ -1,3 +1,4 @@
+import { Op } from 'sequelize';
 import User from '../models/User';
 import Party from '../models/Party';
 import PartyParticipant from '../models/PartyParticipant';
@@ -56,7 +57,7 @@ export class MatchingService {
         { where: { id: partyId } }
       );
 
-      console.log(`Matching completed for party ${partyId}`);
+      console.log(`✅ Matching completed for party ${partyId}`);
     } catch (error) {
       console.error('Error running matching:', error);
       throw error;
@@ -92,7 +93,7 @@ export class MatchingService {
 
     // Shuffle and take 3
     const shuffled = compatibleUsers.sort(() => Math.random() - 0.5);
-    const selectedMatches = shuffled.slice(0, 3);
+    const selectedMatches = shuffled.slice(0, Math.min(3, shuffled.length));
 
     // Create match records
     for (const matchedUser of selectedMatches) {
@@ -100,8 +101,20 @@ export class MatchingService {
       const existingMatch = await Match.findOne({
         where: {
           partyId,
-          user1Id: [user.id, matchedUser.id],
-          user2Id: [user.id, matchedUser.id],
+          [Op.or]: [
+            {
+              [Op.and]: [
+                { user1Id: user.id },
+                { user2Id: matchedUser.id }
+              ]
+            },
+            {
+              [Op.and]: [
+                { user1Id: matchedUser.id },
+                { user2Id: user.id }
+              ]
+            }
+          ]
         },
       });
 
@@ -113,7 +126,7 @@ export class MatchingService {
           status: 'pending',
         });
         
-        console.log(`Created match: ${user.name} ↔ ${matchedUser.name}`);
+        console.log(`✓ Created match: ${user.name} ↔ ${matchedUser.name}`);
       }
     }
   }
@@ -123,23 +136,30 @@ export class MatchingService {
     try {
       const now = new Date();
       
+      console.log(`[CRON] Checking parties at ${now.toISOString()}`);
+      
       // Find parties where matching should start but hasn't
       const parties = await Party.findAll({
         where: {
           matchingStarted: false,
           matchingStartTime: {
-            $lte: now,
+            [Op.lte]: now,
           },
         },
       });
 
-      console.log(`Found ${parties.length} parties ready for matching`);
+      console.log(`[CRON] Found ${parties.length} parties ready for matching`);
 
       for (const party of parties) {
+        console.log(`[CRON] Running matching for party: ${party.name} (${party.id})`);
         await this.runMatching(party.id);
       }
+      
+      if (parties.length === 0) {
+        console.log('[CRON] No parties need matching right now');
+      }
     } catch (error) {
-      console.error('Error checking matching:', error);
+      console.error('[CRON] Error checking matching:', error);
     }
   }
 }

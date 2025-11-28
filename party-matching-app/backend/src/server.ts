@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 import app from './app';
 import sequelize from './db';
-import './models/index'; // Import associations
+import './models/index';
 import { MatchingService } from './services/matchingService';
 
 dotenv.config();
@@ -14,17 +14,17 @@ async function startServer() {
     console.log('Connected to SQL database');
     
     await sequelize.sync({ alter: false });
-    console.log('Database schema updated');
+    console.log('Database schema loaded');
     
-    // Start cron job for automatic matching (check every 5 minutes)
+    // Start cron job for automatic matching (check every 1 minute for debugging)
     setInterval(async () => {
-      console.log('Checking for parties ready for matching...');
+      console.log('--- Checking for parties ready for matching ---');
       await MatchingService.checkAndRunMatching();
-    }, 5 * 60 * 1000); // 5 minutes
+    }, 1 * 60 * 1000); // Changed from 5 minutes to 1 minute
     
     app.listen(PORT, () => {
       console.log(`Server is running on http://localhost:${PORT}`);
-      console.log('Automatic matching checker is active');
+      console.log('Automatic matching checker is active (every 1 minute)');
     });
   } catch (error) {
     console.error('Unable to start server:', error);
