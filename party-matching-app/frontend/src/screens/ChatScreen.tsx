@@ -87,16 +87,32 @@ export default function ChatScreen({ route, navigation }: any) {
           data={messages}
           keyExtractor={(item: any) => item.id}
           onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
-          renderItem={({ item }: any) => (
-            <View style={[
-              styles.messageBubble,
-              item.senderId === currentUserId ? styles.myMessage : styles.theirMessage
-            ]}>
-              <Text style={item.senderId === currentUserId ? styles.myText : styles.theirText}>
-                {item.text}
-              </Text>
-            </View>
-          )}
+          renderItem={({ item }: any) => {
+            const isMe = item.senderId === currentUserId;
+            const timeString = new Date(item.createdAt).toLocaleTimeString([], { 
+              hour: '2-digit', 
+              minute: '2-digit' 
+            });
+
+            return (
+              <View style={[
+                styles.messageWrapper,
+                isMe ? styles.myWrapper : styles.theirWrapper
+              ]}>
+                <View style={[
+                  styles.messageBubble,
+                  isMe ? styles.myMessage : styles.theirMessage
+                ]}>
+                  <Text style={isMe ? styles.myText : styles.theirText}>
+                    {item.text}
+                  </Text>
+                  <Text style={[styles.timestamp, isMe ? styles.myTimestamp : styles.theirTimestamp]}>
+                    {timeString}
+                  </Text>
+                </View>
+              </View>
+            );
+          }}
           ListEmptyComponent={
             <Text style={styles.emptyText}>No messages yet. Say hi!</Text>
           }
@@ -121,19 +137,71 @@ export default function ChatScreen({ route, navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
+  container: { flex: 1, backgroundColor: '#f0f2f5' }, // Slightly darker bg to make white bubbles pop
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: { padding: 15, backgroundColor: 'white', flexDirection: 'row', alignItems: 'center', elevation: 2 },
   backButton: { color: '#007AFF', fontSize: 16, marginRight: 15 },
   headerTitle: { fontSize: 18, fontWeight: 'bold' },
-  messageBubble: { padding: 10, borderRadius: 15, margin: 5, maxWidth: '80%' },
-  myMessage: { alignSelf: 'flex-end', backgroundColor: '#007AFF' },
-  theirMessage: { alignSelf: 'flex-start', backgroundColor: '#E5E5EA' },
-  myText: { color: 'white' },
-  theirText: { color: 'black' },
-  inputContainer: { flexDirection: 'row', padding: 10, backgroundColor: 'white' },
-  input: { flex: 1, backgroundColor: '#f0f0f0', borderRadius: 20, paddingHorizontal: 15, paddingVertical: 10 },
+  
+  // --- UPDATED MESSAGE STYLES ---
+  
+  messageWrapper: { 
+    width: '100%', 
+    flexDirection: 'row', 
+    marginBottom: 10,
+    paddingHorizontal: 10
+  },
+  
+  // YOU (Sender) -> Left side
+  myWrapper: { 
+    justifyContent: 'flex-start' 
+  },
+  
+  // THEM (Receiver) -> Right side
+  theirWrapper: { 
+    justifyContent: 'flex-end' 
+  },
+  
+  messageBubble: { 
+    padding: 12, 
+    borderRadius: 15, 
+    maxWidth: '75%',
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 1,
+  },
+  
+  // YOU -> Blue
+  myMessage: { 
+    backgroundColor: '#007AFF', 
+    borderTopLeftRadius: 2 
+  },
+  
+  // THEM -> White
+  theirMessage: { 
+    backgroundColor: '#FFFFFF', 
+    borderTopRightRadius: 2
+  },
+  
+  // Text Colors
+  myText: { color: 'white', fontSize: 16 },
+  theirText: { color: 'black', fontSize: 16 },
+  
+  // Timestamps
+  timestamp: {
+    fontSize: 10,
+    marginTop: 4,
+    alignSelf: 'flex-end'
+  },
+  myTimestamp: { color: 'rgba(255,255,255, 0.7)' },
+  theirTimestamp: { color: '#999' },
+
+  // --- INPUT STYLES ---
+  inputContainer: { flexDirection: 'row', padding: 10, backgroundColor: 'white', alignItems: 'center' },
+  input: { flex: 1, backgroundColor: '#f0f0f0', borderRadius: 20, paddingHorizontal: 15, paddingVertical: 10, maxHeight: 100 },
   sendButton: { justifyContent: 'center', paddingHorizontal: 15 },
-  sendText: { color: '#007AFF', fontWeight: 'bold' },
+  sendText: { color: '#007AFF', fontWeight: 'bold', fontSize: 16 },
   emptyText: { textAlign: 'center', marginTop: 20, color: '#999' }
 });

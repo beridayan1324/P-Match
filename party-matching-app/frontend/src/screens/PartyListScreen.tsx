@@ -92,22 +92,32 @@ export default function PartyListScreen({ navigation }: any) {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* --- START OF HEADER --- */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Parties</Text>
-        <View style={styles.headerRight}>
-          {isAdmin && (
-            <TouchableOpacity 
-              style={styles.adminButton}
-              onPress={() => navigation.navigate('AdminPanel')}
-            >
-              <Ionicons name="add-circle" size={32} color={theme.colors.primary} />
-            </TouchableOpacity>
-          )}
-          <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
-            <Ionicons name="person-circle-outline" size={32} color={theme.colors.primary} />
+        <View>
+          <Text style={styles.headerTitle}>Parties</Text>
+          <Text style={styles.headerSubtitle}>Find your next event</Text>
+        </View>
+
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          {/* NEW CHAT BUTTON */}
+          <TouchableOpacity 
+            style={{ marginRight: 15, padding: 5 }} 
+            onPress={() => navigation.navigate('ChatsList')}
+          >
+            <Ionicons name="chatbubbles-outline" size={26} color={theme.colors.text} />
+          </TouchableOpacity>
+
+          {/* PROFILE BUTTON */}
+          <TouchableOpacity 
+            style={{ padding: 5 }}
+            onPress={() => navigation.navigate('Profile')}
+          >
+            <Ionicons name="person-circle-outline" size={30} color={theme.colors.text} />
           </TouchableOpacity>
         </View>
       </View>
+      {/* --- END OF HEADER --- */}
 
       <FlatList
         data={parties}
@@ -149,6 +159,11 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '700',
     color: theme.colors.text,
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: theme.colors.textLight,
+    marginTop: 4,
   },
   headerRight: {
     flexDirection: 'row',
