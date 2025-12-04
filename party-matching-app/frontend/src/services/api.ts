@@ -76,3 +76,9 @@ export const partyAPI = {
   respondToMatch: (matchId: string, action: 'accept' | 'reject') => 
     apiClient.post(`/api/party/match/${matchId}/respond`, { action }),
 };
+
+export const chatAPI = {
+  getChats: () => apiClient.get('/api/chat'),
+  getMessages: (matchId: string) => apiClient.get(`/api/chat/${matchId}/messages`),
+  sendMessage: (matchId: string, text: string) => apiClient.post(`/api/chat/${matchId}/send`, { text }),
+};

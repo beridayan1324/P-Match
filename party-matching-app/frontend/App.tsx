@@ -14,6 +14,7 @@ import PartyDetailsScreen from './src/screens/PartyDetailsScreen';
 import MatchPreviewScreen from './src/screens/MatchPreviewScreen';
 import MatchesListScreen from './src/screens/MatchesListScreen';
 import AdminPanelScreen from './src/screens/AdminPanelScreen';
+import ChatScreen from './src/screens/ChatScreen'; // Import the screen
 
 const Stack = createNativeStackNavigator();
 
@@ -52,6 +53,11 @@ export default function App() {
             <Stack.Screen name="MatchPreview" component={MatchPreviewScreen} />
             <Stack.Screen name="MatchesList" component={MatchesListScreen} />
             <Stack.Screen name="AdminPanel" component={AdminPanelScreen} />
+            <Stack.Screen 
+              name="Chat" 
+              component={ChatScreen} 
+              options={{ headerShown: false }} 
+            />
           </Stack.Group>
         </Stack.Navigator>
       </NavigationContainer>

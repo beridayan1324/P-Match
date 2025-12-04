@@ -3,10 +3,13 @@ import app from './app';
 import sequelize from './db';
 import './models/index';
 import { MatchingService } from './services/matchingService';
+import chatRoutes from './routes/chat';
 
 dotenv.config();
 
 const PORT = process.env.PORT || 5000;
+
+app.use('/api/chat', chatRoutes);
 
 async function startServer() {
   try {

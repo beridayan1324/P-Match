@@ -1,23 +1,13 @@
 import { DataTypes, Model } from 'sequelize';
 import sequelize from '../db';
 
-interface MatchAttributes {
-  id?: string;
-  partyId: string;
-  user1Id: string;
-  user2Id: string;
-  user1Status?: 'pending' | 'accepted' | 'rejected';
-  user2Status?: 'pending' | 'accepted' | 'rejected';
-  mutualMatch?: boolean;
-}
-
-class Match extends Model<MatchAttributes> implements MatchAttributes {
+class Match extends Model {
   public id!: string;
   public partyId!: string;
   public user1Id!: string;
   public user2Id!: string;
-  public user1Status!: 'pending' | 'accepted' | 'rejected';
-  public user2Status!: 'pending' | 'accepted' | 'rejected';
+  public user1Status!: string;
+  public user2Status!: string;
   public mutualMatch!: boolean;
   
   public readonly createdAt!: Date;
@@ -75,14 +65,6 @@ Match.init(
     sequelize,
     tableName: 'matches',
     timestamps: true,
-    indexes: [
-      {
-        fields: ['partyId', 'user1Id'],
-      },
-      {
-        fields: ['partyId', 'user2Id'],
-      },
-    ],
   }
 );
 
