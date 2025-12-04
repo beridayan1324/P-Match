@@ -151,7 +151,7 @@ export default function ProfileScreen({ navigation }: any) {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Profile</Text>
+        <Text style={styles.headerTitle}>הפרופיל שלי</Text>
         <TouchableOpacity onPress={handleLogout}>
           <Ionicons name="log-out-outline" size={24} color={theme.colors.error} />
         </TouchableOpacity>
@@ -182,7 +182,7 @@ export default function ProfileScreen({ navigation }: any) {
 
         {/* Name */}
         <InputField
-          label="Name *"
+          label="שם *"
           value={name}
           onChangeText={setName}
           placeholder="Your name"
@@ -191,7 +191,7 @@ export default function ProfileScreen({ navigation }: any) {
 
         {/* Gender */}
         <View style={styles.fieldContainer}>
-          <Text style={styles.label}>Gender *</Text>
+          <Text style={styles.label}>מגדר *</Text>
           <View style={styles.buttonGroup}>
             {['male', 'female', 'other'].map((g) => (
               <TouchableOpacity
@@ -209,7 +209,7 @@ export default function ProfileScreen({ navigation }: any) {
 
         {/* Gender Preference */}
         <View style={styles.fieldContainer}>
-          <Text style={styles.label}>Looking for *</Text>
+          <Text style={styles.label}>מחפש *</Text>
           <View style={styles.buttonGroup}>
             {[
               {value: 'male', label: 'Men' },
@@ -232,7 +232,7 @@ export default function ProfileScreen({ navigation }: any) {
 
         {/* Bio */}
         <InputField
-          label="Bio * (min 20 characters)"
+          label="ביוגרפיה * (min 20 characters)"
           value={bio}
           onChangeText={setBio}
           placeholder="Tell others about yourself..."
@@ -244,7 +244,7 @@ export default function ProfileScreen({ navigation }: any) {
 
         {/* Interests */}
         <InputField
-          label="Interests (comma separated)"
+          label="תחומי עניין (comma separated)"
           value={interests}
           onChangeText={setInterests}
           placeholder="e.g., Music, Sports, Travel"
@@ -261,7 +261,7 @@ export default function ProfileScreen({ navigation }: any) {
         />
 
         <PrimaryButton
-          title="Save Profile"
+          title="ערוך פרופיל"
           onPress={handleSave}
           loading={saving}
           style={styles.saveButton}
@@ -351,6 +351,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: theme.colors.text,
     marginBottom: theme.spacing.sm,
+    textAlign: 'right',
   },
   buttonGroup: {
     flexDirection: 'row',
@@ -387,5 +388,17 @@ const styles = StyleSheet.create({
   saveButton: {
     marginTop: theme.spacing.lg,
     marginBottom: theme.spacing.xxl,
+  },
+  buttonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.primary,
+    textAlign: 'right',
+  },
+  logoutText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.error,
+    textAlign: 'right',
   },
 });

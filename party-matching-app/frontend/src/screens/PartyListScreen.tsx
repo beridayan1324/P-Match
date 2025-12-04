@@ -58,7 +58,7 @@ export default function PartyListScreen({ navigation }: any) {
       {item.hasJoined && (
         <View style={styles.joinedBadge}>
           <Ionicons name="checkmark-circle" size={16} color={theme.colors.white} />
-          <Text style={styles.joinedBadgeText}>Joined</Text>
+          <Text style={styles.joinedBadgeText}>רשום</Text>
         </View>
       )}
       
@@ -68,16 +68,8 @@ export default function PartyListScreen({ navigation }: any) {
       />
       <View style={styles.partyInfo}>
         <Text style={styles.partyName}>{item.name}</Text>
-        <View style={styles.partyDetail}>
-          <Ionicons name="location-outline" size={16} color={theme.colors.textLight} />
-          <Text style={styles.partyDetailText}>{item.location}</Text>
-        </View>
-        <View style={styles.partyDetail}>
-          <Ionicons name="calendar-outline" size={16} color={theme.colors.textLight} />
-          <Text style={styles.partyDetailText}>
-            {new Date(item.date).toLocaleDateString()}
-          </Text>
-        </View>
+        <Text style={styles.partyDate}>{new Date(item.date).toLocaleDateString()}</Text>
+        <Text style={styles.partyLocation}>{item.location}</Text>
         {item.timeUntilMatching && (
           <View style={styles.countdown}>
             <Ionicons name="timer-outline" size={16} color={theme.colors.primary} />
@@ -94,13 +86,8 @@ export default function PartyListScreen({ navigation }: any) {
     <SafeAreaView style={styles.container}>
       {/* --- START OF HEADER --- */}
       <View style={styles.header}>
-        <View>
-          <Text style={styles.headerTitle}>Parties</Text>
-          <Text style={styles.headerSubtitle}>Find your next event</Text>
-        </View>
-
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          {/* NEW CHAT BUTTON */}
+          {/* Buttons moved to LEFT side for RTL feel, or keep right if preferred */}
           <TouchableOpacity 
             style={{ marginRight: 15, padding: 5 }} 
             onPress={() => navigation.navigate('ChatsList')}
@@ -116,6 +103,11 @@ export default function PartyListScreen({ navigation }: any) {
             <Ionicons name="person-circle-outline" size={30} color={theme.colors.text} />
           </TouchableOpacity>
         </View>
+        
+        <View>
+          <Text style={styles.headerTitle}>מסיבות</Text>
+          <Text style={styles.headerSubtitle}>מצא את האירוע הבא שלך</Text>
+        </View>
       </View>
       {/* --- END OF HEADER --- */}
 
@@ -130,7 +122,7 @@ export default function PartyListScreen({ navigation }: any) {
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <Ionicons name="calendar-outline" size={64} color={theme.colors.textLight} />
-            <Text style={styles.emptyText}>No parties yet</Text>
+            <Text style={styles.emptyText}>אין מסיבות זמינות כרגע</Text>
             {isAdmin && (
               <Text style={styles.emptySubtext}>Tap + to create one</Text>
             )}
@@ -147,7 +139,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.bg,
   },
   header: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: theme.spacing.lg,
@@ -159,11 +151,13 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '700',
     color: theme.colors.text,
+    textAlign: 'right',
   },
   headerSubtitle: {
     fontSize: 14,
     color: theme.colors.textLight,
     marginTop: 4,
+    textAlign: 'right',
   },
   headerRight: {
     flexDirection: 'row',
@@ -215,6 +209,19 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: theme.colors.text,
     marginBottom: theme.spacing.sm,
+    textAlign: 'right',
+  },
+  partyDate: {
+    fontSize: 14,
+    color: theme.colors.textLight,
+    marginBottom: theme.spacing.xs,
+    textAlign: 'right',
+  },
+  partyLocation: {
+    fontSize: 14,
+    color: theme.colors.textLight,
+    marginBottom: theme.spacing.xs,
+    textAlign: 'right',
   },
   partyDetail: {
     flexDirection: 'row',

@@ -43,13 +43,13 @@ export default function PartyDetailsScreen({ route, navigation }: any) {
       const distance = matchingStart - now;
       const hours = Math.floor(distance / (1000 * 60 * 60));
       const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-      setCountdown(`Matching starts in ${hours}h ${minutes}m`);
+      setCountdown(`השידוכים מתחילים בעוד ${hours} שעות ו-${minutes} דקות`);
     } else if (now >= matchingStart && now < partyStart) {
       // Matching active
-      setCountdown('Matching active - View your matches!');
+      setCountdown('השידוכים פעילים - צפה בהתאמות שלך!');
     } else {
       // Party ended
-      setCountdown('Party ended');
+      setCountdown('המסיבה הסתיימה');
     }
   };
 
@@ -59,7 +59,7 @@ export default function PartyDetailsScreen({ route, navigation }: any) {
       await partyAPI.joinParty(party.id);
       setHasJoined(true);
       loadParticipants(); // Refresh participant list
-      Alert.alert('Success', 'You joined the party! Matching will start 24h before the event.');
+      Alert.alert('הצלחה', 'הצטרפת למסיבה! השידוכים יתחילו 24 שעות לפני האירוע.');
     } catch (error: any) {
       console.error('Failed to join party', error);
       
@@ -67,18 +67,18 @@ export default function PartyDetailsScreen({ route, navigation }: any) {
         const message = error.response.data.message;
         if (message.includes('Profile incomplete')) {
           Alert.alert(
-            'Complete Your Profile',
-            'Please complete your profile before joining a party.',
+            'השלם את הפרופיל שלך',
+            'אנא השלם את הפרופיל שלך לפני ההצטרפות למסיבה.',
             [
-              { text: 'Cancel', style: 'cancel' },
-              { text: 'Complete Profile', onPress: () => navigation.navigate('Profile') },
+              { text: 'ביטול', style: 'cancel' },
+              { text: 'השלם פרופיל', onPress: () => navigation.navigate('Profile') },
             ]
           );
         } else {
-          Alert.alert('Error', message);
+          Alert.alert('שגיאה', message);
         }
       } else {
-        Alert.alert('Error', 'Failed to join party');
+        Alert.alert('שגיאה', 'נכשל בהצטרפות למסיבה');
       }
     } finally {
       setLoading(false);
@@ -86,7 +86,7 @@ export default function PartyDetailsScreen({ route, navigation }: any) {
   };
 
   const handleViewMatches = () => {
-    navigation.navigate('MatchesList', { partyId: party.id }); // Changed from 'Matches' to 'MatchesList'
+    navigation.navigate('MatchesList', { partyId: party.id });
   };
 
   const isMatchingActive = party.matchingStarted;
@@ -97,11 +97,11 @@ export default function PartyDetailsScreen({ route, navigation }: any) {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Party Details</Text>
         <View style={{ width: 24 }} />
+        <Text style={styles.headerTitle}>פרטי מסיבה</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-forward" size={24} color={theme.colors.text} />
+        </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -116,20 +116,20 @@ export default function PartyDetailsScreen({ route, navigation }: any) {
           <Text style={styles.partyName}>{party.name}</Text>
 
           <View style={styles.detailRow}>
-            <Ionicons name="location" size={20} color={theme.colors.primary} />
             <Text style={styles.detailText}>{party.location}</Text>
+            <Ionicons name="location" size={20} color={theme.colors.primary} />
           </View>
 
           <View style={styles.detailRow}>
-            <Ionicons name="calendar" size={20} color={theme.colors.primary} />
             <Text style={styles.detailText}>
-              {new Date(party.date).toLocaleString()}
+              {new Date(party.date).toLocaleString('he-IL')}
             </Text>
+            <Ionicons name="calendar" size={20} color={theme.colors.primary} />
           </View>
 
           {party.description && (
             <View style={styles.descriptionContainer}>
-              <Text style={styles.descriptionLabel}>About</Text>
+              <Text style={styles.descriptionLabel}>אודות</Text>
               <Text style={styles.descriptionText}>{party.description}</Text>
             </View>
           )}
@@ -137,36 +137,36 @@ export default function PartyDetailsScreen({ route, navigation }: any) {
 
         {/* Countdown */}
         <View style={styles.countdownCard}>
-          <Ionicons 
-            name={isMatchingActive ? "checkmark-circle" : "timer"} 
-            size={24} 
-            color={isMatchingActive ? theme.colors.success : theme.colors.primary} 
-          />
           <Text style={[
             styles.countdownText,
             isMatchingActive && styles.countdownTextActive
           ]}>
             {countdown}
           </Text>
+          <Ionicons 
+            name={isMatchingActive ? "checkmark-circle" : "timer"} 
+            size={24} 
+            color={isMatchingActive ? theme.colors.success : theme.colors.primary} 
+          />
         </View>
 
         {/* Participants */}
         <View style={styles.participantsCard}>
           <Text style={styles.sectionTitle}>
-            {totalParticipants} {totalParticipants === 1 ? 'Person' : 'People'} Joined
+            {totalParticipants} {totalParticipants === 1 ? 'אדם' : 'אנשים'} הצטרפו
           </Text>
           
           {totalParticipants >= 6 ? (
             <View style={styles.statusBadge}>
+              <Text style={styles.statusText}>מוכן לשידוכים!</Text>
               <Ionicons name="checkmark-circle" size={16} color={theme.colors.success} />
-              <Text style={styles.statusText}>Ready for matching!</Text>
             </View>
           ) : (
             <View style={[styles.statusBadge, styles.statusBadgeWarning]}>
-              <Ionicons name="alert-circle" size={16} color={theme.colors.warning} />
               <Text style={[styles.statusText, styles.statusTextWarning]}>
-                Need {6 - totalParticipants} more for matching
+                צריך עוד {6 - totalParticipants} לשידוכים
               </Text>
+              <Ionicons name="alert-circle" size={16} color={theme.colors.warning} />
             </View>
           )}
 
@@ -193,7 +193,7 @@ export default function PartyDetailsScreen({ route, navigation }: any) {
                   <View style={styles.participantAvatarMore}>
                     <Text style={styles.participantMoreText}>+{totalParticipants - 3}</Text>
                   </View>
-                  <Text style={styles.participantName}>more</Text>
+                  <Text style={styles.participantName}>עוד</Text>
                 </View>
               )}
             </View>
@@ -204,7 +204,7 @@ export default function PartyDetailsScreen({ route, navigation }: any) {
         <View style={styles.actionsContainer}>
           {!hasJoined ? (
             <PrimaryButton
-              title="Join Matching"
+              title="הצטרף לשידוכים"
               onPress={handleJoinParty}
               loading={loading}
               icon="add-circle"
@@ -212,13 +212,13 @@ export default function PartyDetailsScreen({ route, navigation }: any) {
           ) : (
             <>
               <View style={styles.joinedBadge}>
+                <Text style={styles.joinedText}>הצטרפת למסיבה זו!</Text>
                 <Ionicons name="checkmark-circle" size={24} color={theme.colors.success} />
-                <Text style={styles.joinedText}>You've joined this party!</Text>
               </View>
               
               {canViewMatches && (
                 <PrimaryButton
-                  title="View Matches"
+                  title="צפה בהתאמות"
                   onPress={handleViewMatches}
                   icon="people"
                   style={styles.matchesButton}
@@ -271,14 +271,16 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: theme.colors.text,
     marginBottom: theme.spacing.md,
+    textAlign: 'right', // RTL
   },
   detailRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'flex-end', // RTL
     marginBottom: theme.spacing.sm,
   },
   detailText: {
-    marginLeft: theme.spacing.sm,
+    marginRight: theme.spacing.sm, // Changed from marginLeft
     fontSize: 16,
     color: theme.colors.text,
   },
@@ -293,15 +295,18 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: theme.colors.text,
     marginBottom: theme.spacing.xs,
+    textAlign: 'right', // RTL
   },
   descriptionText: {
     fontSize: 15,
     color: theme.colors.textLight,
     lineHeight: 22,
+    textAlign: 'right', // RTL
   },
   countdownCard: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'flex-end', // RTL
     backgroundColor: theme.colors.primaryLight,
     padding: theme.spacing.md,
     marginHorizontal: theme.spacing.lg,
@@ -309,11 +314,12 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.md,
   },
   countdownText: {
-    marginLeft: theme.spacing.sm,
+    marginRight: theme.spacing.sm, // Changed from marginLeft
     fontSize: 16,
     fontWeight: '600',
     color: theme.colors.primary,
     flex: 1,
+    textAlign: 'right', // RTL
   },
   countdownTextActive: {
     color: theme.colors.success,
@@ -331,22 +337,24 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: theme.colors.text,
     marginBottom: theme.spacing.sm,
+    textAlign: 'right', // RTL
   },
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'flex-end', // RTL
     backgroundColor: '#E8F8F5',
     paddingVertical: theme.spacing.xs,
     paddingHorizontal: theme.spacing.sm,
     borderRadius: theme.borderRadius.sm,
-    alignSelf: 'flex-start',
+    alignSelf: 'flex-end', // RTL
     marginBottom: theme.spacing.md,
   },
   statusBadgeWarning: {
     backgroundColor: '#FFF3CD',
   },
   statusText: {
-    marginLeft: theme.spacing.xs,
+    marginRight: theme.spacing.xs, // Changed from marginLeft
     fontSize: 13,
     fontWeight: '600',
     color: theme.colors.success,
@@ -355,7 +363,7 @@ const styles = StyleSheet.create({
     color: '#856404',
   },
   participantsList: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse', // RTL
     flexWrap: 'wrap',
     gap: theme.spacing.md,
   },
@@ -411,7 +419,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.md,
   },
   joinedText: {
-    marginLeft: theme.spacing.sm,
+    marginRight: theme.spacing.sm, // Changed from marginLeft
     fontSize: 16,
     fontWeight: '600',
     color: theme.colors.success,

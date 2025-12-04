@@ -62,6 +62,14 @@ export default function MatchesListScreen({ route, navigation }: any) {
           ? theme.colors.error
           : theme.colors.textLight;
 
+    const statusText = item.mutualMatch 
+      ? 'התאמה הדדית!' 
+      : item.myStatus === 'accepted' 
+        ? 'ממתין לתגובה' 
+        : item.myStatus === 'rejected'
+          ? 'נדחה'
+          : 'התאמה חדשה';
+
     return (
       <TouchableOpacity 
         style={styles.matchCard}
@@ -95,17 +103,11 @@ export default function MatchesListScreen({ route, navigation }: any) {
           <View style={styles.statusRow}>
             <Ionicons name={statusIcon} size={16} color={statusColor} />
             <Text style={[styles.statusText, { color: statusColor }]}>
-              {item.mutualMatch 
-                ? 'Mutual Match!' 
-                : item.myStatus === 'accepted' 
-                  ? 'Waiting for response' 
-                  : item.myStatus === 'rejected'
-                    ? 'Declined'
-                    : 'New match'}
+              {statusText}
             </Text>
           </View>
         </View>
-        <Ionicons name="chevron-forward" size={24} color={theme.colors.textLight} />
+        <Ionicons name="chevron-back" size={24} color={theme.colors.textLight} />
       </TouchableOpacity>
     );
   };
@@ -113,7 +115,7 @@ export default function MatchesListScreen({ route, navigation }: any) {
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <Text style={styles.loadingText}>Loading matches...</Text>
+        <Text style={styles.loadingText}>טוען התאמות...</Text>
       </SafeAreaView>
     );
   }
@@ -121,11 +123,11 @@ export default function MatchesListScreen({ route, navigation }: any) {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Your Matches</Text>
         <View style={{ width: 24 }} />
+        <Text style={styles.headerTitle}>ההתאמות שלך</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-forward" size={24} color={theme.colors.text} />
+        </TouchableOpacity>
       </View>
 
       <FlatList
@@ -139,8 +141,8 @@ export default function MatchesListScreen({ route, navigation }: any) {
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Ionicons name="heart-dislike-outline" size={64} color={theme.colors.textLight} />
-            <Text style={styles.emptyText}>No matches yet</Text>
-            <Text style={styles.emptySubtext}>Check back later!</Text>
+            <Text style={styles.emptyText}>אין התאמות עדיין</Text>
+            <Text style={styles.emptySubtext}>חזור לבדוק מאוחר יותר!</Text>
           </View>
         }
       />
@@ -171,7 +173,7 @@ const styles = StyleSheet.create({
     padding: theme.spacing.lg,
   },
   matchCard: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse', // RTL: Image on right
     backgroundColor: theme.colors.white,
     padding: theme.spacing.md,
     borderRadius: theme.borderRadius.md,
@@ -183,25 +185,28 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    marginRight: theme.spacing.md,
+    marginLeft: theme.spacing.md, // Changed from marginRight
     backgroundColor: theme.colors.bg,
   },
   matchInfo: {
     flex: 1,
+    alignItems: 'flex-end', // Align text to right
   },
   matchName: {
     fontSize: 18,
     fontWeight: '700',
     color: theme.colors.text,
     marginBottom: theme.spacing.xs,
+    textAlign: 'right',
   },
   matchBio: {
     fontSize: 14,
     color: theme.colors.textLight,
     marginBottom: theme.spacing.xs,
+    textAlign: 'right',
   },
   interestsContainer: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse', // RTL
     flexWrap: 'wrap',
     gap: theme.spacing.xs,
     marginBottom: theme.spacing.xs,
@@ -218,7 +223,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   statusRow: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse', // RTL
     alignItems: 'center',
     marginTop: theme.spacing.xs,
     gap: theme.spacing.xs,

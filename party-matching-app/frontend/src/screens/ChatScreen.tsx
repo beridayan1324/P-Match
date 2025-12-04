@@ -72,7 +72,7 @@ export default function ChatScreen({ route, navigation }: any) {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.backButton}>Back</Text>
+          <Text style={styles.backButton}>חזור</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{otherUser.name}</Text>
       </View>
@@ -114,7 +114,7 @@ export default function ChatScreen({ route, navigation }: any) {
             );
           }}
           ListEmptyComponent={
-            <Text style={styles.emptyText}>No messages yet. Say hi!</Text>
+            <Text style={styles.emptyText}>אין הודעות עדיין. תגיד היי!</Text>
           }
         />
       )}
@@ -125,10 +125,11 @@ export default function ChatScreen({ route, navigation }: any) {
             style={styles.input}
             value={inputText}
             onChangeText={setInputText}
-            placeholder="Type a message..."
+            placeholder="כתוב הודעה..."
+            textAlign="right"
           />
           <TouchableOpacity onPress={sendMessage} style={styles.sendButton}>
-            <Text style={styles.sendText}>Send</Text>
+            <Text style={styles.sendText}>שלח</Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -139,7 +140,7 @@ export default function ChatScreen({ route, navigation }: any) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f0f2f5' }, // Slightly darker bg to make white bubbles pop
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: { padding: 15, backgroundColor: 'white', flexDirection: 'row', alignItems: 'center', elevation: 2 },
+  header: { padding: 15, backgroundColor: 'white', flexDirection: 'row-reverse', alignItems: 'center', elevation: 2 },
   backButton: { color: '#007AFF', fontSize: 16, marginRight: 15 },
   headerTitle: { fontSize: 18, fontWeight: 'bold' },
   
@@ -199,7 +200,7 @@ const styles = StyleSheet.create({
   theirTimestamp: { color: '#999' },
 
   // --- INPUT STYLES ---
-  inputContainer: { flexDirection: 'row', padding: 10, backgroundColor: 'white', alignItems: 'center' },
+  inputContainer: { flexDirection: 'row-reverse', padding: 10, backgroundColor: 'white', alignItems: 'center' },
   input: { flex: 1, backgroundColor: '#f0f0f0', borderRadius: 20, paddingHorizontal: 15, paddingVertical: 10, maxHeight: 100 },
   sendButton: { justifyContent: 'center', paddingHorizontal: 15 },
   sendText: { color: '#007AFF', fontWeight: 'bold', fontSize: 16 },

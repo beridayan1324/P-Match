@@ -13,19 +13,19 @@ export default function WelcomeScreen({ navigation }: any) {
         <View style={styles.logoContainer}>
           <Text style={styles.logo}>💕</Text>
           <Text style={styles.title}>P-Match</Text>
-          <Text style={styles.subtitle}>Find your perfect party match</Text>
+          <Text style={styles.subtitle}>מצא את ההתאמה המושלמת למסיבה</Text>
         </View>
 
         <View style={styles.buttonContainer}>
           <PrimaryButton
-            title="Get Started"
+            title="התחל עכשיו"
             onPress={() => navigation.navigate('Signup')}
             style={styles.button}
           />
           <Text style={styles.loginText}>
-            Already have an account?{' '}
+            כבר יש לך חשבון?{' '}
             <Text style={styles.loginLink} onPress={() => navigation.navigate('Login')}>
-              Login
+              התחבר
             </Text>
           </Text>
         </View>
@@ -75,6 +75,7 @@ const styles = StyleSheet.create({
     color: theme.colors.white,
     textAlign: 'center',
     fontSize: 14,
+    flexDirection: 'row-reverse', // RTL for text flow
   },
   loginLink: {
     fontWeight: '700',

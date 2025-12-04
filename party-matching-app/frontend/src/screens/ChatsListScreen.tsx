@@ -69,7 +69,7 @@ export default function ChatsListScreen({ navigation }: any) {
           </View>
           
           <Text style={styles.lastMessage} numberOfLines={1}>
-            {lastMessage ? lastMessage.text : 'Start a conversation!'}
+            {lastMessage ? lastMessage.text : 'התחל שיחה!'}
           </Text>
         </View>
         <Ionicons name="chevron-forward" size={20} color="#ccc" />
@@ -83,7 +83,7 @@ export default function ChatsListScreen({ navigation }: any) {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Messages</Text>
+        <Text style={styles.headerTitle}>הודעות</Text>
         <View style={{ width: 24 }} />
       </View>
 
@@ -98,8 +98,8 @@ export default function ChatsListScreen({ navigation }: any) {
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Ionicons name="chatbubbles-outline" size={64} color="#ccc" />
-              <Text style={styles.emptyText}>No matches yet</Text>
-              <Text style={styles.emptySubtext}>Join parties to find matches!</Text>
+              <Text style={styles.emptyText}>אין הודעות עדיין</Text>
+              <Text style={styles.emptySubtext}>הצטרף למסיבות כדי למצוא התאמות!</Text>
             </View>
           }
         />
@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#333' },
   list: { padding: 16 },
   chatCard: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     backgroundColor: '#fff',
     padding: 12,
     borderRadius: 12,
@@ -137,9 +137,9 @@ const styles = StyleSheet.create({
   avatar: { width: 50, height: 50, borderRadius: 25, marginRight: 12, backgroundColor: '#eee' },
   chatInfo: { flex: 1, marginRight: 8 },
   topRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
-  chatName: { fontSize: 16, fontWeight: 'bold', color: '#333' },
+  chatName: { fontSize: 16, fontWeight: 'bold', color: '#333', textAlign: 'right' },
   timeText: { fontSize: 12, color: '#999' },
-  lastMessage: { fontSize: 14, color: '#666' },
+  lastMessage: { fontSize: 14, color: '#666', textAlign: 'right' },
   emptyContainer: { alignItems: 'center', justifyContent: 'center', marginTop: 100 },
   emptyText: { fontSize: 18, fontWeight: 'bold', color: '#333', marginTop: 16 },
   emptySubtext: { fontSize: 14, color: '#999', marginTop: 8 },

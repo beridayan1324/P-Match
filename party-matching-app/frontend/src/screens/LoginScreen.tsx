@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Alert, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Alert, TouchableOpacity, ScrollView, TextInput, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import InputField from '../components/InputField';
-import PrimaryButton from '../components/PrimaryButton';
 import { theme } from '../theme/theme';
 import { authAPI } from '../services/api';
 
@@ -43,67 +41,61 @@ export default function LoginScreen({ navigation }: any) {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* TEMPORARY DEBUG BUTTON - REMOVE LATER */}
-      <TouchableOpacity
-        style={{ padding: 10, backgroundColor: 'red', margin: 10 }}
-        onPress={clearStorage}
-      >
-        <Text style={{ color: 'white', textAlign: 'center' }}>Clear Storage (Debug)</Text>
-      </TouchableOpacity>
+      <View style={styles.content}>
+        <Text style={styles.title}>התחברות</Text>
+        <Text style={styles.subtitle}>ברוכים הבאים ל-P-Match</Text>
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <View style={styles.content}>
-          <Text style={styles.title}>Welcome Back</Text>
-          <Text style={styles.subtitle}>Sign in to continue</Text>
-
-          <View style={styles.form}>
-            <InputField
-              label="Email"
+        <View style={styles.form}>
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>אימייל</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="הכנס אימייל"
               value={email}
               onChangeText={setEmail}
-              placeholder="Enter your email"
-              keyboardType="email-address"
               autoCapitalize="none"
-              icon="mail"
+              keyboardType="email-address"
+              textAlign="right" // RTL
             />
+          </View>
 
-            <InputField
-              label="Password"
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>סיסמה</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="הכנס סיסמה"
               value={password}
               onChangeText={setPassword}
-              placeholder="Enter your password"
               secureTextEntry
-              icon="lock-closed"
+              textAlign="right" // RTL
             />
+          </View>
 
-            <PrimaryButton
-              title="Login"
-              onPress={handleLogin}
-              loading={loading}
-              style={styles.loginButton}
-            />
+          <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>התחבר</Text>
+            )}
+          </TouchableOpacity>
 
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>אין לך חשבון? </Text>
             <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
-              <Text style={styles.signupText}>
-                Don't have an account? <Text style={styles.signupLink}>Sign up</Text>
-              </Text>
+              <Text style={styles.link}>הירשם כאן</Text>
             </TouchableOpacity>
           </View>
         </View>
-      </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
 
+// Update styles for RTL
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.bg,
-  },
-  scrollContent: {
-    padding: theme.spacing.lg,
-    justifyContent: 'center',
-    minHeight: '100%',
   },
   content: {
     flex: 1,
@@ -112,27 +104,60 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 32,
-    fontWeight: '700',
-    color: theme.colors.text,
-    marginBottom: theme.spacing.xs,
+    fontWeight: 'bold',
+    color: theme.colors.primary,
+    marginBottom: 10,
+    textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 18,
     color: theme.colors.textLight,
-    marginBottom: theme.spacing.xxl,
+    marginBottom: 40,
+    textAlign: 'center',
   },
   form: {
     gap: theme.spacing.md,
   },
-  loginButton: {
-    marginTop: theme.spacing.md,
+  inputContainer: {
+    marginBottom: theme.spacing.md,
   },
-  signupText: {
-    textAlign: 'center',
+  label: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.text,
+    marginBottom: 8,
+    textAlign: 'right', // Align Right
+  },
+  input: {
+    backgroundColor: theme.colors.white,
+    padding: 15,
+    borderRadius: theme.borderRadius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    fontSize: 16,
+    textAlign: 'right', // Align Right
+  },
+  button: {
+    backgroundColor: theme.colors.primary,
+    paddingVertical: 15,
+    borderRadius: theme.borderRadius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonText: {
+    color: theme.colors.white,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  footer: {
+    flexDirection: 'row-reverse',
+    justifyContent: 'center',
+    marginTop: 20,
+  },
+  footerText: {
     color: theme.colors.textLight,
-    marginTop: theme.spacing.lg,
   },
-  signupLink: {
+  link: {
     color: theme.colors.primary,
     fontWeight: '600',
   },

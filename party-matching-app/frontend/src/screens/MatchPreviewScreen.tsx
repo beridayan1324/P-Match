@@ -43,17 +43,17 @@ export default function MatchPreviewScreen({ route, navigation }: any) {
       
       if (response.data.mutualMatch) {
         Alert.alert(
-          '🎉 It\'s a Match!',
-          `You and ${user.name} both accepted! You can now chat.`,
+          '🎉 יש התאמה!',
+          `את/ה ו${user.name} אישרתם אחד את השני! אפשר להתחיל לשוחח.`,
           [
             { 
-              text: 'Start Chatting', 
+              text: 'התחל צ׳אט', 
               onPress: () => {
                 navigation.navigate('Chat', { matchId: match.matchId, otherUser: user });
               }
             },
             { 
-              text: 'Later', 
+              text: 'אחר כך', 
               style: 'cancel', 
               onPress: () => {
                 navigation.goBack();
@@ -63,11 +63,11 @@ export default function MatchPreviewScreen({ route, navigation }: any) {
         );
       } else {
         Alert.alert(
-          'Success', 
-          action === 'accept' ? 'Match accepted! Waiting for their response.' : 'Match declined',
+          'בוצע בהצלחה', 
+          action === 'accept' ? 'ההתאמה אושרה! ממתין לתגובה מהצד השני.' : 'ההתאמה נדחתה',
           [
             {
-              text: 'OK',
+              text: 'אישור',
               onPress: () => navigation.goBack()
             }
           ]
@@ -75,7 +75,7 @@ export default function MatchPreviewScreen({ route, navigation }: any) {
       }
     } catch (error) {
       console.error('Respond error:', error);
-      Alert.alert('Error', 'Failed to respond to match');
+      Alert.alert('שגיאה', 'נכשל בשליחת התגובה');
     } finally {
       setLoading(false);
     }
@@ -87,11 +87,11 @@ export default function MatchPreviewScreen({ route, navigation }: any) {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Match Profile</Text>
         <View style={{ width: 24 }} />
+        <Text style={styles.headerTitle}>פרופיל התאמה</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-forward" size={24} color={theme.colors.text} />
+        </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
@@ -105,15 +105,15 @@ export default function MatchPreviewScreen({ route, navigation }: any) {
         <Text style={styles.name}>{user.name}</Text>
         {user.location && (
           <View style={styles.locationRow}>
-            <Ionicons name="location" size={16} color={theme.colors.textLight} />
             <Text style={styles.location}>{user.location}</Text>
+            <Ionicons name="location" size={16} color={theme.colors.textLight} />
           </View>
         )}
 
         {/* Bio */}
         {user.bio && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>About</Text>
+            <Text style={styles.sectionTitle}>אודות</Text>
             <Text style={styles.bio}>{user.bio}</Text>
           </View>
         )}
@@ -121,7 +121,7 @@ export default function MatchPreviewScreen({ route, navigation }: any) {
         {/* Interests */}
         {userInterests.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Interests</Text>
+            <Text style={styles.sectionTitle}>תחומי עניין</Text>
             <View style={styles.interestsContainer}>
               {userInterests.map((interest: string, index: number) => (
                 <View key={`interest-${index}`} style={styles.interestTag}>
@@ -135,22 +135,22 @@ export default function MatchPreviewScreen({ route, navigation }: any) {
         {/* Status Badges */}
         {mutualMatch && (
           <View style={styles.mutualBadge}>
+            <Text style={styles.mutualText}>יש התאמה! 🎉</Text>
             <Ionicons name="heart" size={24} color={theme.colors.white} />
-            <Text style={styles.mutualText}>It's a Match! 🎉</Text>
           </View>
         )}
 
         {myStatus === 'accepted' && !mutualMatch && (
           <View style={styles.waitingBadge}>
+            <Text style={styles.waitingText}>ממתין לתגובה מ-{user.name}</Text>
             <Ionicons name="time" size={20} color={theme.colors.warning} />
-            <Text style={styles.waitingText}>Waiting for {user.name}'s response</Text>
           </View>
         )}
 
         {myStatus === 'rejected' && (
           <View style={styles.rejectedBadge}>
+            <Text style={styles.rejectedText}>דחית את ההתאמה הזו</Text>
             <Ionicons name="close-circle" size={20} color={theme.colors.error} />
-            <Text style={styles.rejectedText}>You declined this match</Text>
           </View>
         )}
 
@@ -163,7 +163,7 @@ export default function MatchPreviewScreen({ route, navigation }: any) {
               disabled={loading}
             >
               <Ionicons name="close-circle" size={32} color={theme.colors.error} />
-              <Text style={styles.rejectText}>Pass</Text>
+              <Text style={styles.rejectText}>דלג</Text>
             </TouchableOpacity>
 
             <TouchableOpacity 
@@ -172,14 +172,14 @@ export default function MatchPreviewScreen({ route, navigation }: any) {
               disabled={loading}
             >
               <Ionicons name="heart-circle" size={32} color={theme.colors.white} />
-              <Text style={styles.acceptText}>Like</Text>
+              <Text style={styles.acceptText}>אהבתי</Text>
             </TouchableOpacity>
           </View>
         )}
 
         {mutualMatch && (
           <PrimaryButton
-            title="Start Chatting"
+            title="התחל צ׳אט"
             onPress={() => navigation.navigate('Chat', { matchId: match.matchId, otherUser: user })}
             icon="chatbubbles"
             style={styles.chatButton}
@@ -233,7 +233,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.lg,
   },
   location: {
-    marginLeft: theme.spacing.xs,
+    marginRight: theme.spacing.xs, // Changed from marginLeft
     fontSize: 16,
     color: theme.colors.textLight,
   },
@@ -245,14 +245,16 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: theme.colors.text,
     marginBottom: theme.spacing.sm,
+    textAlign: 'right', // RTL
   },
   bio: {
     fontSize: 16,
     color: theme.colors.text,
     lineHeight: 24,
+    textAlign: 'right', // RTL
   },
   interestsContainer: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse', // RTL
     flexWrap: 'wrap',
     gap: theme.spacing.sm,
   },
@@ -313,7 +315,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   actions: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse', // RTL: Accept on right, Reject on left usually, or keep standard
     justifyContent: 'space-around',
     marginTop: theme.spacing.xl,
     gap: theme.spacing.lg,

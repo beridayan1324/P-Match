@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Alert, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Alert, TouchableOpacity, ScrollView, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-import InputField from '../components/InputField';
-import PrimaryButton from '../components/PrimaryButton';
 import { theme } from '../theme/theme';
 
 const API_URL = 'http://10.0.0.15:5000';
@@ -54,39 +52,42 @@ export default function SignupScreen({ navigation }: any) {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>Create Account</Text>
-        <Text style={styles.subtitle}>Join the party!</Text>
+        <Text style={styles.title}>הרשמה</Text>
+        <Text style={styles.subtitle}>צור חשבון חדש</Text>
 
         <View style={styles.form}>
-          <InputField
-            label="Name"
+          <Text style={styles.label}>שם מלא</Text>
+          <TextInput
+            placeholder="הכנס שם מלא"
+            textAlign="right"
             value={name}
             onChangeText={setName}
-            placeholder="Enter your name"
-            icon="person"
+            style={styles.input}
           />
 
-          <InputField
-            label="Email"
+          <Text style={styles.label}>אימייל</Text>
+          <TextInput
+            placeholder="הכנס אימייל"
+            textAlign="right"
             value={email}
             onChangeText={setEmail}
-            placeholder="Enter your email"
             keyboardType="email-address"
             autoCapitalize="none"
-            icon="mail"
+            style={styles.input}
           />
 
-          <InputField
-            label="Password"
+          <Text style={styles.label}>סיסמה</Text>
+          <TextInput
+            placeholder="הכנס סיסמה"
+            textAlign="right"
             value={password}
             onChangeText={setPassword}
-            placeholder="Enter your password"
             secureTextEntry
-            icon="lock-closed"
+            style={styles.input}
           />
 
+          <Text style={styles.label}>מגדר</Text>
           <View style={styles.genderContainer}>
-            <Text style={styles.genderLabel}>Gender</Text>
             <View style={styles.genderButtons}>
               {['male', 'female', 'other'].map((g) => (
                 <TouchableOpacity
@@ -102,18 +103,20 @@ export default function SignupScreen({ navigation }: any) {
             </View>
           </View>
 
-          <PrimaryButton
-            title="Sign Up"
+          <TouchableOpacity
+            style={styles.button}
             onPress={handleSignup}
-            loading={loading}
-            style={styles.signupButton}
-          />
-
-          <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-            <Text style={styles.loginText}>
-              Already have an account? <Text style={styles.loginLink}>Login</Text>
-            </Text>
+            disabled={loading}
+          >
+            <Text style={styles.buttonText}>{loading ? 'טוען...' : 'הירשם'}</Text>
           </TouchableOpacity>
+
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>כבר יש לך חשבון? </Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+              <Text style={styles.link}>התחבר כאן</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -135,26 +138,38 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: theme.colors.text,
     marginBottom: theme.spacing.xs,
+    textAlign: 'right',
   },
   subtitle: {
     fontSize: 16,
     color: theme.colors.textLight,
     marginBottom: theme.spacing.xxl,
+    textAlign: 'right',
   },
   form: {
     gap: theme.spacing.md,
   },
-  genderContainer: {
-    marginVertical: theme.spacing.sm,
-  },
-  genderLabel: {
+  label: {
     fontSize: 14,
     fontWeight: '600',
     color: theme.colors.text,
     marginBottom: theme.spacing.sm,
+    textAlign: 'right',
+  },
+  input: {
+    padding: theme.spacing.sm,
+    borderRadius: theme.borderRadius.md,
+    backgroundColor: theme.colors.white,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    marginBottom: theme.spacing.md,
+    textAlign: 'right',
+  },
+  genderContainer: {
+    marginVertical: theme.spacing.sm,
   },
   genderButtons: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     gap: theme.spacing.sm,
   },
   genderButton: {
@@ -178,15 +193,26 @@ const styles = StyleSheet.create({
   genderTextActive: {
     color: theme.colors.white,
   },
-  signupButton: {
+  button: {
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.borderRadius.md,
+    backgroundColor: theme.colors.primary,
+    alignItems: 'center',
     marginTop: theme.spacing.md,
   },
-  loginText: {
-    textAlign: 'center',
-    color: theme.colors.textLight,
+  buttonText: {
+    color: theme.colors.white,
+    fontWeight: '600',
+  },
+  footer: {
+    flexDirection: 'row-reverse',
+    justifyContent: 'center',
     marginTop: theme.spacing.lg,
   },
-  loginLink: {
+  footerText: {
+    color: theme.colors.textLight,
+  },
+  link: {
     color: theme.colors.primary,
     fontWeight: '600',
   },
