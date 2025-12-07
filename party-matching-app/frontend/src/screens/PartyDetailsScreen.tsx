@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { theme } from '../theme/theme';
 import { partyAPI } from '../services/api';
 import PrimaryButton from '../components/PrimaryButton';
@@ -11,15 +12,34 @@ export default function PartyDetailsScreen({ route, navigation }: any) {
   const [participants, setParticipants] = useState<any[]>([]);
   const [totalParticipants, setTotalParticipants] = useState(0);
   const [hasJoined, setHasJoined] = useState(party.hasJoined || false);
+  const [isOptedIn, setIsOptedIn] = useState(party.isOptedIn || false);
+  const [ticketCode, setTicketCode] = useState(party.ticketCode || null);
   const [loading, setLoading] = useState(false);
   const [countdown, setCountdown] = useState('');
+  const [isManager, setIsManager] = useState(false);
 
   useEffect(() => {
     loadParticipants();
+    loadUserData();
     updateCountdown();
     const interval = setInterval(updateCountdown, 1000);
     return () => clearInterval(interval);
   }, []);
+
+  const loadUserData = async () => {
+    try {
+      const userData = await AsyncStorage.getItem('userData');
+      console.log('User Data:', userData); // Debug log
+      if (userData) {
+        const user = JSON.parse(userData);
+        const isManagerUser = user.role === 'manager' || user.role === 'admin';
+        console.log('Is Manager:', isManagerUser); // Debug log
+        setIsManager(isManagerUser);
+      }
+    } catch (error) {
+      console.error('Error loading user data:', error);
+    }
+  };
 
   const loadParticipants = async () => {
     try {
@@ -56,10 +76,11 @@ export default function PartyDetailsScreen({ route, navigation }: any) {
   const handleJoinParty = async () => {
     try {
       setLoading(true);
-      await partyAPI.joinParty(party.id);
+      const response = await partyAPI.joinParty(party.id);
       setHasJoined(true);
+      setTicketCode(response.data.participant.ticketCode);
       loadParticipants(); // Refresh participant list
-      Alert.alert('הצלחה', 'הצטרפת למסיבה! השידוכים יתחילו 24 שעות לפני האירוע.');
+      Alert.alert('Success', 'Ticket purchased successfully!');
     } catch (error: any) {
       console.error('Failed to join party', error);
       
@@ -67,21 +88,35 @@ export default function PartyDetailsScreen({ route, navigation }: any) {
         const message = error.response.data.message;
         if (message.includes('Profile incomplete')) {
           Alert.alert(
-            'השלם את הפרופיל שלך',
-            'אנא השלם את הפרופיל שלך לפני ההצטרפות למסיבה.',
+            'Complete Profile',
+            'Please complete your profile before joining.',
             [
-              { text: 'ביטול', style: 'cancel' },
-              { text: 'השלם פרופיל', onPress: () => navigation.navigate('Profile') },
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Go to Profile', onPress: () => navigation.navigate('Profile') },
             ]
           );
         } else {
-          Alert.alert('שגיאה', message);
+          Alert.alert('Error', message);
         }
       } else {
-        Alert.alert('שגיאה', 'נכשל בהצטרפות למסיבה');
+        Alert.alert('Error', 'Failed to join party');
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleToggleMatching = async () => {
+    try {
+        setLoading(true);
+        const newStatus = !isOptedIn;
+        await partyAPI.toggleMatchingStatus(party.id, newStatus);
+        setIsOptedIn(newStatus);
+        Alert.alert('Success', newStatus ? 'You have joined the matching pool!' : 'You have left the matching pool.');
+    } catch (error: any) {
+        Alert.alert('Error', error.response?.data?.message || 'Failed to update matching status');
+    } finally {
+        setLoading(false);
     }
   };
 
@@ -126,6 +161,15 @@ export default function PartyDetailsScreen({ route, navigation }: any) {
             </Text>
             <Ionicons name="calendar" size={20} color={theme.colors.primary} />
           </View>
+
+          {party.ticketPrice !== undefined && (
+            <View style={styles.detailRow}>
+                <Text style={[styles.detailText, { fontWeight: 'bold', color: theme.colors.primary }]}>
+                    {party.ticketPrice > 0 ? `₪${party.ticketPrice}` : 'Free'}
+                </Text>
+                <Ionicons name="pricetag" size={20} color={theme.colors.primary} />
+            </View>
+          )}
 
           {party.description && (
             <View style={styles.descriptionContainer}>
@@ -204,27 +248,56 @@ export default function PartyDetailsScreen({ route, navigation }: any) {
         <View style={styles.actionsContainer}>
           {!hasJoined ? (
             <PrimaryButton
-              title="הצטרף לשידוכים"
+              title={`Buy Ticket ${party.ticketPrice > 0 ? `(₪${party.ticketPrice})` : '(Free)'}`}
               onPress={handleJoinParty}
               loading={loading}
-              icon="add-circle"
+              icon="card-outline"
             />
           ) : (
             <>
               <View style={styles.joinedBadge}>
-                <Text style={styles.joinedText}>הצטרפת למסיבה זו!</Text>
+                <Text style={styles.joinedText}>You have a ticket!</Text>
                 <Ionicons name="checkmark-circle" size={24} color={theme.colors.success} />
               </View>
               
-              {canViewMatches && (
+              <PrimaryButton
+                title={isOptedIn ? "Leave Matching Pool" : "Join Matching Pool"}
+                onPress={handleToggleMatching}
+                loading={loading}
+                icon={isOptedIn ? "close-circle-outline" : "heart-outline"}
+                style={{ marginTop: 10, backgroundColor: isOptedIn ? theme.colors.textLight : theme.colors.primary }}
+              />
+
+              {canViewMatches && isOptedIn && (
                 <PrimaryButton
-                  title="צפה בהתאמות"
+                  title="View Matches"
                   onPress={handleViewMatches}
                   icon="people"
                   style={styles.matchesButton}
                 />
               )}
+
+              <PrimaryButton
+                title="View Ticket"
+                onPress={() => navigation.navigate('TicketScreen', { 
+                    ticketCode: ticketCode || party.ticketCode, 
+                    partyName: party.name,
+                    partyDate: party.date,
+                    location: party.location
+                })}
+                style={{ marginTop: 10, backgroundColor: theme.colors.secondary }}
+                icon="qr-code-outline"
+              />
             </>
+          )}
+
+          {isManager && (
+            <PrimaryButton
+              title="Scan Tickets"
+              onPress={() => navigation.navigate('ScannerScreen', { partyId: party.id })}
+              style={{ marginTop: 10, backgroundColor: theme.colors.text }}
+              icon="scan-outline"
+            />
           )}
         </View>
       </ScrollView>

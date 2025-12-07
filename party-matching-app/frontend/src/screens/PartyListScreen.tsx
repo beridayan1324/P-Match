@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, RefreshControl } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, RefreshControl, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -10,6 +10,8 @@ export default function PartyListScreen({ navigation }: any) {
   const [parties, setParties] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [canCreateParty, setCanCreateParty] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filter, setFilter] = useState('all'); // 'all', 'upcoming', 'joined'
 
   useEffect(() => {
     loadUserData();
@@ -52,6 +54,18 @@ export default function PartyListScreen({ navigation }: any) {
     setRefreshing(false);
   };
 
+  const filteredParties = parties.filter((party: any) => {
+    const matchesSearch = party.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          party.location.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    if (!matchesSearch) return false;
+
+    if (filter === 'joined') return party.hasJoined;
+    if (filter === 'upcoming') return new Date(party.date) > new Date();
+    
+    return true;
+  });
+
   const renderParty = ({ item }: any) => (
     <TouchableOpacity 
       style={styles.partyCard}
@@ -69,7 +83,12 @@ export default function PartyListScreen({ navigation }: any) {
         style={styles.partyImage}
       />
       <View style={styles.partyInfo}>
-        <Text style={styles.partyName}>{item.name}</Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Text style={styles.partyName}>{item.name}</Text>
+            <Text style={{ fontWeight: 'bold', color: theme.colors.primary }}>
+                {item.ticketPrice > 0 ? `₪${item.ticketPrice}` : 'Free'}
+            </Text>
+        </View>
         <Text style={styles.partyDate}>{new Date(item.date).toLocaleDateString()}</Text>
         <Text style={styles.partyLocation}>{item.location}</Text>
         {item.timeUntilMatching && (
@@ -122,8 +141,40 @@ export default function PartyListScreen({ navigation }: any) {
       </View>
       {/* --- END OF HEADER --- */}
 
+      <View style={styles.searchContainer}>
+        <View style={styles.searchBar}>
+            <Ionicons name="search" size={20} color={theme.colors.textLight} style={{ marginRight: 8 }} />
+            <TextInput 
+                style={styles.searchInput}
+                placeholder="Search parties..."
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+            />
+        </View>
+        <View style={styles.filterContainer}>
+            <TouchableOpacity 
+                style={[styles.filterButton, filter === 'all' && styles.filterButtonActive]}
+                onPress={() => setFilter('all')}
+            >
+                <Text style={[styles.filterText, filter === 'all' && styles.filterTextActive]}>All</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+                style={[styles.filterButton, filter === 'upcoming' && styles.filterButtonActive]}
+                onPress={() => setFilter('upcoming')}
+            >
+                <Text style={[styles.filterText, filter === 'upcoming' && styles.filterTextActive]}>Upcoming</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+                style={[styles.filterButton, filter === 'joined' && styles.filterButtonActive]}
+                onPress={() => setFilter('joined')}
+            >
+                <Text style={[styles.filterText, filter === 'joined' && styles.filterTextActive]}>Joined</Text>
+            </TouchableOpacity>
+        </View>
+      </View>
+
       <FlatList
-        data={parties}
+        data={filteredParties}
         renderItem={renderParty}
         keyExtractor={(item: any) => item.id}
         contentContainerStyle={styles.listContent}
@@ -133,7 +184,7 @@ export default function PartyListScreen({ navigation }: any) {
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <Ionicons name="calendar-outline" size={64} color={theme.colors.textLight} />
-            <Text style={styles.emptyText}>אין מסיבות זמינות כרגע</Text>
+            <Text style={styles.emptyText}>No parties found</Text>
             {canCreateParty && (
               <Text style={styles.emptySubtext}>Tap + to create one</Text>
             )}
@@ -275,5 +326,49 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: theme.colors.textLight,
     marginTop: theme.spacing.xs,
+  },
+  searchContainer: {
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
+    backgroundColor: theme.colors.bg,
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.white,
+    borderRadius: theme.borderRadius.md,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    marginBottom: theme.spacing.md,
+    ...theme.shadows.card,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: theme.colors.text,
+  },
+  filterContainer: {
+    flexDirection: 'row',
+    gap: theme.spacing.sm,
+  },
+  filterButton: {
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: 20,
+    backgroundColor: theme.colors.white,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  filterButtonActive: {
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
+  },
+  filterText: {
+    fontSize: 14,
+    color: theme.colors.textLight,
+  },
+  filterTextActive: {
+    color: theme.colors.white,
+    fontWeight: '600',
   },
 });

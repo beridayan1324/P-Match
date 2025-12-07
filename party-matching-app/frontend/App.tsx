@@ -19,6 +19,8 @@ import ManagerDashboardScreen from './src/screens/ManagerDashboardScreen';
 import ManagerPartyDetailsScreen from './src/screens/ManagerPartyDetailsScreen';
 import ChatScreen from './src/screens/ChatScreen'; // Import the screen
 import ChatsListScreen from './src/screens/ChatsListScreen';
+import TicketScreen from './src/screens/TicketScreen';
+import ScannerScreen from './src/screens/ScannerScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -70,6 +72,8 @@ export default function App() {
               component={ChatScreen} 
               options={{ headerShown: false }} 
             />
+            <Stack.Screen name="TicketScreen" component={TicketScreen} />
+            <Stack.Screen name="ScannerScreen" component={ScannerScreen} />
           </Stack.Group>
         </Stack.Navigator>
       </NavigationContainer>

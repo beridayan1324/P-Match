@@ -14,10 +14,16 @@ import PartyListScreen from './screens/PartyListScreen';
 import PartyDetailsScreen from './screens/PartyDetailsScreen';
 import MatchPreviewScreen from './screens/MatchPreviewScreen';
 import MatchesListScreen from './screens/MatchesListScreen';
+import AdminPanelScreen from './screens/AdminPanelScreen';
+import ChatsListScreen from './screens/ChatsListScreen';
+import ChatScreen from './screens/ChatScreen';
+import TicketScreen from './screens/TicketScreen';
+import ScannerScreen from './screens/ScannerScreen';
 
 const Stack = createNativeStackNavigator();
 
 export default function App() {
+  console.log('App component rendering - checking routes'); // Debug log
   const [initialRoute, setInitialRoute] = React.useState<string>('Welcome');
   const [loading, setLoading] = React.useState(true);
 
@@ -55,13 +61,18 @@ export default function App() {
               <Stack.Screen name="Login" component={LoginScreen} />
             </Stack.Group>
 
-            {/* Main App Screens */}
+            {/* Main App Screens - Updated */}
             <Stack.Group>
               <Stack.Screen name="PartyList" component={PartyListScreen} />
               <Stack.Screen name="PartyDetails" component={PartyDetailsScreen} />
               <Stack.Screen name="Profile" component={ProfileScreen} />
               <Stack.Screen name="MatchPreview" component={MatchPreviewScreen} />
               <Stack.Screen name="MatchesList" component={MatchesListScreen} />
+              <Stack.Screen name="AdminPanel" component={AdminPanelScreen} />
+              <Stack.Screen name="ChatsList" component={ChatsListScreen} />
+              <Stack.Screen name="Chat" component={ChatScreen} />
+              <Stack.Screen name="TicketScreen" component={TicketScreen} />
+              <Stack.Screen name="ScannerScreen" component={ScannerScreen} />
             </Stack.Group>
           </Stack.Navigator>
         </NavigationContainer>

@@ -9,6 +9,9 @@ interface PartyParticipantAttributes {
   status?: 'pending' | 'accepted' | 'rejected' | 'abandoned';
   paid?: boolean;
   optIn?: boolean;
+  ticketCode?: string;
+  checkedIn?: boolean;
+  checkedInAt?: Date;
 }
 
 class PartyParticipant extends Model<PartyParticipantAttributes> implements PartyParticipantAttributes {
@@ -19,6 +22,9 @@ class PartyParticipant extends Model<PartyParticipantAttributes> implements Part
   public status!: 'pending' | 'accepted' | 'rejected' | 'abandoned';
   public paid!: boolean;
   public optIn!: boolean;
+  public ticketCode!: string;
+  public checkedIn!: boolean;
+  public checkedInAt?: Date;
   
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -64,6 +70,19 @@ PartyParticipant.init(
     optIn: {
       type: DataTypes.BOOLEAN,
       defaultValue: true,
+    },
+    ticketCode: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      unique: true,
+    },
+    checkedIn: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
+    checkedInAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
     },
   },
   {

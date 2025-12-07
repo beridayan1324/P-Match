@@ -9,6 +9,35 @@ async function seedTestParty() {
     await sequelize.authenticate();
     console.log('Connected to database');
 
+    // Create Manager User
+    const managerEmail = 'beridayan@gmail.com';
+    const managerPassword = await bcrypt.hash('beridayan', 10);
+    
+    const [manager, created] = await User.findOrCreate({
+      where: { email: managerEmail },
+      defaults: {
+        name: 'Beri Dayan',
+        email: managerEmail,
+        password: managerPassword,
+        role: 'manager',
+        isApproved: true, // Accepted
+        gender: 'male',
+        genderPreference: 'female',
+        bio: 'I am the party manager!',
+        interests: ['Parties', 'Management'],
+        location: 'Tel Aviv',
+        profileImage: 'https://i.pravatar.cc/300?img=11',
+      }
+    });
+
+    if (created) {
+      console.log('✅ Created manager user: beridayan@gmail.com');
+    } else {
+      console.log('ℹ️ Manager user already exists');
+      // Update to ensure isApproved is true if it existed
+      await manager.update({ isApproved: true, role: 'manager' });
+    }
+
     // Find admin user
     const admin = await User.findOne({ where: { email: 'admin@gmail.com' } });
     if (!admin) {

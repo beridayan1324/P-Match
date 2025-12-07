@@ -81,6 +81,10 @@ export const partyAPI = {
   getPartyStats: (partyId: string) => apiClient.get(`/api/party/${partyId}/stats`),
   updateParticipantStatus: (partyId: string, userId: string, status: string) => 
     apiClient.post(`/api/party/${partyId}/participants/${userId}/status`, { status }),
+  scanTicket: (partyId: string, ticketCode: string) => 
+    apiClient.post(`/api/party/${partyId}/scan`, { ticketCode }),
+  toggleMatchingStatus: (partyId: string, optIn: boolean) => 
+    apiClient.post(`/api/party/${partyId}/matching-status`, { optIn }),
 };
 
 export const chatAPI = {

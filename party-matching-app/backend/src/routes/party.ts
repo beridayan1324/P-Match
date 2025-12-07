@@ -8,11 +8,12 @@ import {
   joinParty, 
   getPartyParticipants,
   getUserMatches,
-  toggleOptIn,
+  toggleMatchingStatus,
   respondToMatch,
   getManagerParties,
   getPartyStats,
-  updateParticipantStatus
+  updateParticipantStatus,
+  scanTicket
 } from '../controllers/partyController';
 
 const router = Router();
@@ -21,6 +22,7 @@ const router = Router();
 router.get('/manager/my-parties', authenticate, isManager, getManagerParties);
 router.get('/:partyId/stats', authenticate, isManager, getPartyStats);
 router.post('/:partyId/participants/:userId/status', authenticate, isManager, updateParticipantStatus);
+router.post('/:partyId/scan', authenticate, isManager, scanTicket);
 
 // Manager or Admin - create party
 router.post('/', authenticate, isManager, createParty);
@@ -28,17 +30,14 @@ router.post('/', authenticate, isManager, createParty);
 // All users - get parties
 router.get('/', authenticate, getAllParties);
 
-// Join party
+// Join party (Buy Ticket)
 router.post('/:partyId/join', authenticate, joinParty);
+
+// Toggle matching status
+router.post('/:partyId/matching-status', authenticate, toggleMatchingStatus);
 
 // Get party participants
 router.get('/:partyId/participants', authenticate, getPartyParticipants);
-
-// Get user's matches for a party
-router.get('/:partyId/matches', authenticate, getUserMatches);
-
-// Toggle opt-in
-router.post('/:partyId/opt-in', authenticate, toggleOptIn);
 
 // Accept/Reject match
 router.post('/match/:matchId/respond', authenticate, respondToMatch);

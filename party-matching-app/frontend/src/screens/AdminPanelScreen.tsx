@@ -16,6 +16,8 @@ export default function AdminPanelScreen({ navigation }: any) {
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [image, setImage] = useState('');
+  const [ticketPrice, setTicketPrice] = useState('');
+  const [expenses, setExpenses] = useState('');
   const [loading, setLoading] = useState(false);
 
   const pickImage = async () => {
@@ -54,6 +56,8 @@ export default function AdminPanelScreen({ navigation }: any) {
         description,
         date: date.toISOString(),
         image,
+        ticketPrice: parseFloat(ticketPrice) || 0,
+        expenses: parseFloat(expenses) || 0,
       });
       
       Alert.alert('Success', 'Party created successfully!', [
@@ -155,6 +159,27 @@ export default function AdminPanelScreen({ navigation }: any) {
           multiline
           numberOfLines={4}
         />
+
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+            <View style={{ flex: 1 }}>
+                <InputField
+                    label="Ticket Price (₪)"
+                    value={ticketPrice}
+                    onChangeText={setTicketPrice}
+                    placeholder="0"
+                    keyboardType="numeric"
+                />
+            </View>
+            <View style={{ flex: 1 }}>
+                <InputField
+                    label="Expenses (₪)"
+                    value={expenses}
+                    onChangeText={setExpenses}
+                    placeholder="0"
+                    keyboardType="numeric"
+                />
+            </View>
+        </View>
 
         <PrimaryButton 
           title="Create Party" 

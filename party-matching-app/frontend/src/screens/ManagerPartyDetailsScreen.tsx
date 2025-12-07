@@ -89,7 +89,10 @@ export default function ManagerPartyDetailsScreen({ route, navigation }: any) {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Quick Actions</Text>
         <View style={styles.actionGrid}>
-            <TouchableOpacity style={styles.actionButton}>
+            <TouchableOpacity 
+                style={styles.actionButton}
+                onPress={() => navigation.navigate('ScannerScreen', { partyId: party.id })}
+            >
                 <Ionicons name="qr-code-outline" size={24} color={theme.colors.primary} />
                 <Text style={styles.actionText}>Scanner</Text>
             </TouchableOpacity>

@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { Op } from 'sequelize';
+import { v4 as uuidv4 } from 'uuid';
 import Party from '../models/Party';
 import PartyParticipant from '../models/PartyParticipant';
 import User from '../models/User';
@@ -55,12 +56,15 @@ export const getAllParties = async (req: any, res: Response) => {
     const partiesWithInfo = parties.map(party => {
       const matchingTime = party.matchingStartTime ? new Date(party.matchingStartTime) : null;
       const timeUntilMatching = matchingTime ? matchingTime.getTime() - now.getTime() : null;
+      const participation = userParticipations.find(p => p.partyId === party.id);
       
       return {
         ...party.toJSON(),
         timeUntilMatching: timeUntilMatching && timeUntilMatching > 0 ? timeUntilMatching : null,
         matchingAvailable: party.matchingStarted,
-        hasJoined: joinedPartyIds.includes(party.id),
+        hasJoined: !!participation,
+        ticketCode: participation ? participation.ticketCode : null,
+        isOptedIn: participation ? participation.optIn : false,
       };
     });
     
@@ -114,14 +118,49 @@ export const joinParty = async (req: any, res: Response) => {
     const participant = await PartyParticipant.create({
       userId,
       partyId,
-      optIn: true,
+      optIn: false, // Default to false, user must opt-in separately
       status: 'pending',
-      paid: false
+      paid: true, // Assuming payment is successful for now
+      ticketCode: uuidv4(), // Generate unique ticket code
     });
     
     res.status(201).json({ message: 'Successfully joined party', participant });
   } catch (error) {
     console.error('Join party error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const toggleMatchingStatus = async (req: any, res: Response) => {
+  try {
+    const userId = req.userId;
+    const { partyId } = req.params;
+    const { optIn } = req.body;
+
+    const participant = await PartyParticipant.findOne({
+      where: { userId, partyId },
+    });
+
+    if (!participant) {
+      return res.status(404).json({ message: 'Not a participant of this party' });
+    }
+
+    // Check if profile is complete before opting in
+    if (optIn) {
+        const user = await User.findByPk(userId);
+        if (!user || !MatchingService.isProfileComplete(user)) {
+             return res.status(400).json({ 
+                message: 'Profile incomplete. Please complete your profile first.',
+            });
+        }
+    }
+
+    participant.optIn = optIn;
+    await participant.save();
+
+    res.json({ message: 'Matching status updated', optIn: participant.optIn });
+  } catch (error) {
+    console.error('Toggle matching status error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -151,7 +190,10 @@ export const getPartyParticipants = async (req: Request, res: Response) => {
       profileImage: (p as any).user?.profileImage,
       joinedAt: p.joinedAt,
       status: p.status,
-      paid: p.paid
+      paid: p.paid,
+      ticketCode: p.ticketCode,
+      checkedIn: p.checkedIn,
+      checkedInAt: p.checkedInAt
     }));
     
     res.json({
@@ -385,6 +427,49 @@ export const updateParticipantStatus = async (req: any, res: Response) => {
     res.json({ message: 'Status updated', participant });
   } catch (error) {
     console.error('Update participant status error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const scanTicket = async (req: any, res: Response) => {
+  try {
+    const { partyId } = req.params;
+    const { ticketCode } = req.body;
+
+    const participant = await PartyParticipant.findOne({
+      where: { ticketCode, partyId },
+      include: [{ model: User, as: 'user', attributes: ['name', 'email', 'gender', 'profileImage'] }]
+    });
+
+    if (!participant) {
+      return res.status(404).json({ valid: false, message: 'Invalid ticket code for this party' });
+    }
+
+    if (participant.status !== 'accepted') {
+      return res.status(400).json({ valid: false, message: `Ticket is not accepted (Status: ${participant.status})` });
+    }
+
+    if (participant.checkedIn) {
+      return res.status(400).json({ 
+        valid: false, 
+        message: 'Ticket already used', 
+        checkedInAt: participant.checkedInAt,
+        user: (participant as any).user 
+      });
+    }
+
+    // Mark as checked in
+    participant.checkedIn = true;
+    participant.checkedInAt = new Date();
+    await participant.save();
+
+    res.json({ 
+      valid: true, 
+      message: 'Check-in successful', 
+      user: (participant as any).user 
+    });
+  } catch (error) {
+    console.error('Scan ticket error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
