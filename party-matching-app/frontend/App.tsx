@@ -15,6 +15,8 @@ import MatchPreviewScreen from './src/screens/MatchPreviewScreen';
 import MatchesListScreen from './src/screens/MatchesListScreen';
 import AdminPanelScreen from './src/screens/AdminPanelScreen';
 import ManageManagersScreen from './src/screens/ManageManagersScreen';
+import ManagerDashboardScreen from './src/screens/ManagerDashboardScreen';
+import ManagerPartyDetailsScreen from './src/screens/ManagerPartyDetailsScreen';
 import ChatScreen from './src/screens/ChatScreen'; // Import the screen
 import ChatsListScreen from './src/screens/ChatsListScreen';
 
@@ -56,6 +58,8 @@ export default function App() {
             <Stack.Screen name="MatchesList" component={MatchesListScreen} />
             <Stack.Screen name="AdminPanel" component={AdminPanelScreen} />
             <Stack.Screen name="ManageManagers" component={ManageManagersScreen} />
+            <Stack.Screen name="ManagerDashboard" component={ManagerDashboardScreen} />
+            <Stack.Screen name="ManagerPartyDetails" component={ManagerPartyDetailsScreen} />
             <Stack.Screen 
               name="ChatsList" 
               component={ChatsListScreen} 

@@ -6,6 +6,8 @@ interface PartyParticipantAttributes {
   userId: string;
   partyId: string;
   joinedAt?: Date;
+  status?: 'pending' | 'accepted' | 'rejected' | 'abandoned';
+  paid?: boolean;
   optIn?: boolean;
 }
 
@@ -14,6 +16,8 @@ class PartyParticipant extends Model<PartyParticipantAttributes> implements Part
   public userId!: string;
   public partyId!: string;
   public joinedAt!: Date;
+  public status!: 'pending' | 'accepted' | 'rejected' | 'abandoned';
+  public paid!: boolean;
   public optIn!: boolean;
   
   public readonly createdAt!: Date;
@@ -48,6 +52,14 @@ PartyParticipant.init(
     joinedAt: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,
+    },
+    status: {
+      type: DataTypes.ENUM('pending', 'accepted', 'rejected', 'abandoned'),
+      defaultValue: 'pending',
+    },
+    paid: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
     },
     optIn: {
       type: DataTypes.BOOLEAN,

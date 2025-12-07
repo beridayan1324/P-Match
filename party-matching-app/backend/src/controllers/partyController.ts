@@ -9,7 +9,8 @@ import { MatchingService } from '../services/matchingService';
 // Create a new party
 export const createParty = async (req: any, res: Response) => {
   try {
-    const { name, date, location, description, image } = req.body;
+    const { name, date, location, description, image, ticketPrice, expenses } = req.body;
+    const userId = req.userId;
     
     // Calculate matching start time (24 hours before party)
     const partyDate = new Date(date);
@@ -23,6 +24,9 @@ export const createParty = async (req: any, res: Response) => {
       image,
       matchingStartTime,
       matchingStarted: false,
+      ticketPrice: ticketPrice || 0,
+      expenses: expenses || 0,
+      createdBy: userId,
     });
     
     res.status(201).json(party);
@@ -106,11 +110,13 @@ export const joinParty = async (req: any, res: Response) => {
       return res.status(400).json({ message: 'Already joined this party' });
     }
     
-    // Join party
+    // Join party - default status is pending
     const participant = await PartyParticipant.create({
       userId,
       partyId,
       optIn: true,
+      status: 'pending',
+      paid: false
     });
     
     res.status(201).json({ message: 'Successfully joined party', participant });
@@ -130,7 +136,7 @@ export const getPartyParticipants = async (req: Request, res: Response) => {
         {
           model: User,
           as: 'user',
-          attributes: ['id', 'name', 'profileImage'],
+          attributes: ['id', 'name', 'profileImage', 'gender', 'email'],
         },
       ],
       order: [['joinedAt', 'ASC']],
@@ -140,8 +146,12 @@ export const getPartyParticipants = async (req: Request, res: Response) => {
       id: p.id,
       userId: p.userId,
       name: (p as any).user?.name,
+      email: (p as any).user?.email,
+      gender: (p as any).user?.gender,
       profileImage: (p as any).user?.profileImage,
       joinedAt: p.joinedAt,
+      status: p.status,
+      paid: p.paid
     }));
     
     res.json({
@@ -278,4 +288,103 @@ export const toggleOptIn = async (req: Request, res: Response) => {
   pp.optIn = !pp.optIn;
   await pp.save();
   return res.json(pp);
+};
+
+// --- NEW MANAGER FUNCTIONS ---
+
+export const getManagerParties = async (req: any, res: Response) => {
+  try {
+    const userId = req.userId;
+    const parties = await Party.findAll({
+      where: { createdBy: userId },
+      order: [['date', 'DESC']]
+    });
+    res.json(parties);
+  } catch (error) {
+    console.error('Get manager parties error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const getPartyStats = async (req: any, res: Response) => {
+  try {
+    const { partyId } = req.params;
+    const party = await Party.findByPk(partyId);
+    
+    if (!party) {
+      return res.status(404).json({ message: 'Party not found' });
+    }
+
+    const participants = await PartyParticipant.findAll({
+      where: { partyId },
+      include: [{ model: User, as: 'user', attributes: ['gender', 'id'] }]
+    });
+
+    const stats = {
+      accepted: 0,
+      pending: 0,
+      rejected: 0,
+      abandoned: 0,
+      totalIncome: 0,
+      expenses: party.expenses || 0,
+      grossRevenue: 0,
+      genderStats: {
+        male: 0,
+        female: 0,
+        other: 0
+      }
+    };
+
+    participants.forEach((p: any) => {
+      // Count status
+      if (p.status === 'accepted') stats.accepted++;
+      else if (p.status === 'pending') stats.pending++;
+      else if (p.status === 'rejected') stats.rejected++;
+      else if (p.status === 'abandoned') stats.abandoned++;
+
+      // Calculate income (assuming accepted users pay)
+      if (p.status === 'accepted') {
+        stats.totalIncome += party.ticketPrice || 0;
+      }
+
+      // Gender stats
+      if (p.user?.gender === 'male') stats.genderStats.male++;
+      else if (p.user?.gender === 'female') stats.genderStats.female++;
+      else stats.genderStats.other++;
+    });
+
+    stats.grossRevenue = stats.totalIncome - stats.expenses;
+
+    res.json(stats);
+  } catch (error) {
+    console.error('Get party stats error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const updateParticipantStatus = async (req: any, res: Response) => {
+  try {
+    const { partyId, userId } = req.params;
+    const { status } = req.body;
+
+    if (!['accepted', 'rejected', 'pending', 'abandoned'].includes(status)) {
+      return res.status(400).json({ message: 'Invalid status' });
+    }
+
+    const participant = await PartyParticipant.findOne({
+      where: { partyId, userId }
+    });
+
+    if (!participant) {
+      return res.status(404).json({ message: 'Participant not found' });
+    }
+
+    participant.status = status;
+    await participant.save();
+
+    res.json({ message: 'Status updated', participant });
+  } catch (error) {
+    console.error('Update participant status error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
 };

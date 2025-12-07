@@ -8,6 +8,9 @@ interface PartyAttributes {
   location: string;
   description?: string;
   image?: string;
+  ticketPrice?: number;
+  expenses?: number;
+  createdBy?: string;
   matchingStarted?: boolean;
   matchingStartTime?: Date;
 }
@@ -19,6 +22,9 @@ class Party extends Model<PartyAttributes> implements PartyAttributes {
   public location!: string;
   public description?: string;
   public image?: string;
+  public ticketPrice!: number;
+  public expenses!: number;
+  public createdBy!: string;
   public matchingStarted!: boolean;
   public matchingStartTime?: Date;
   
@@ -50,8 +56,20 @@ Party.init(
       allowNull: true,
     },
     image: {
-      type: DataTypes.TEXT('long'),
+      type: DataTypes.TEXT,
       allowNull: true,
+    },
+    ticketPrice: {
+      type: DataTypes.FLOAT,
+      defaultValue: 0,
+    },
+    expenses: {
+      type: DataTypes.FLOAT,
+      defaultValue: 0,
+    },
+    createdBy: {
+      type: DataTypes.UUID,
+      allowNull: true, // Allow null for existing parties or system created
     },
     matchingStarted: {
       type: DataTypes.BOOLEAN,

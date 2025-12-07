@@ -75,6 +75,12 @@ export const partyAPI = {
   getMatches: (partyId: string) => apiClient.get(`/api/party/${partyId}/matches`),
   respondToMatch: (matchId: string, action: 'accept' | 'reject') => 
     apiClient.post(`/api/party/match/${matchId}/respond`, { action }),
+  
+  // Manager APIs
+  getManagerParties: () => apiClient.get('/api/party/manager/my-parties'),
+  getPartyStats: (partyId: string) => apiClient.get(`/api/party/${partyId}/stats`),
+  updateParticipantStatus: (partyId: string, userId: string, status: string) => 
+    apiClient.post(`/api/party/${partyId}/participants/${userId}/status`, { status }),
 };
 
 export const chatAPI = {

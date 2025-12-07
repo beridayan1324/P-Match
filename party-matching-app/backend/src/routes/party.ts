@@ -9,10 +9,18 @@ import {
   getPartyParticipants,
   getUserMatches,
   toggleOptIn,
-  respondToMatch
+  respondToMatch,
+  getManagerParties,
+  getPartyStats,
+  updateParticipantStatus
 } from '../controllers/partyController';
 
 const router = Router();
+
+// Manager routes
+router.get('/manager/my-parties', authenticate, isManager, getManagerParties);
+router.get('/:partyId/stats', authenticate, isManager, getPartyStats);
+router.post('/:partyId/participants/:userId/status', authenticate, isManager, updateParticipantStatus);
 
 // Manager or Admin - create party
 router.post('/', authenticate, isManager, createParty);

@@ -20,6 +20,7 @@ export default function ProfileScreen({ navigation }: any) {
   const [interests, setInterests] = useState('');
   const [location, setLocation] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isManager, setIsManager] = useState(false);
 
   useEffect(() => {
     loadProfile();
@@ -40,6 +41,7 @@ export default function ProfileScreen({ navigation }: any) {
       }
       
       setIsAdmin(user.isAdmin || user.role === 'admin');
+      setIsManager(user.role === 'manager' && user.isApproved);
       setName(user.name || '');
       setGender(user.gender || 'male');
       setGenderPreference(user.genderPreference || 'any');
@@ -172,6 +174,21 @@ export default function ProfileScreen({ navigation }: any) {
             onPress={() => navigation.navigate('ManageManagers')}
           >
             <Text style={{ color: 'white', fontWeight: '700' }}>Manage Managers</Text>
+          </TouchableOpacity>
+        )}
+
+        {isManager && (
+          <TouchableOpacity 
+            style={{ 
+              backgroundColor: theme.colors.secondary, 
+              padding: theme.spacing.md, 
+              borderRadius: theme.borderRadius.md,
+              marginBottom: theme.spacing.md,
+              alignItems: 'center'
+            }} 
+            onPress={() => navigation.navigate('ManagerDashboard')}
+          >
+            <Text style={{ color: 'white', fontWeight: '700' }}>Manager Dashboard</Text>
           </TouchableOpacity>
         )}
 
