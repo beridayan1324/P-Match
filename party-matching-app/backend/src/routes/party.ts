@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import authenticate from '../middleware/auth';
 import isAdmin from '../middleware/isAdmin';
+import isManager from '../middleware/isManager';
 import { 
   createParty, 
   getAllParties, 
@@ -13,8 +14,8 @@ import {
 
 const router = Router();
 
-// Admin only - create party
-router.post('/', authenticate, isAdmin, createParty);
+// Manager or Admin - create party
+router.post('/', authenticate, isManager, createParty);
 
 // All users - get parties
 router.get('/', authenticate, getAllParties);

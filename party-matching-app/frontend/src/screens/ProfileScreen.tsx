@@ -19,6 +19,7 @@ export default function ProfileScreen({ navigation }: any) {
   const [profileImage, setProfileImage] = useState('');
   const [interests, setInterests] = useState('');
   const [location, setLocation] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     loadProfile();
@@ -38,6 +39,7 @@ export default function ProfileScreen({ navigation }: any) {
         throw new Error('Invalid profile data received');
       }
       
+      setIsAdmin(user.isAdmin || user.role === 'admin');
       setName(user.name || '');
       setGender(user.gender || 'male');
       setGenderPreference(user.genderPreference || 'any');
@@ -158,6 +160,21 @@ export default function ProfileScreen({ navigation }: any) {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
+        {isAdmin && (
+          <TouchableOpacity 
+            style={{ 
+              backgroundColor: theme.colors.primary, 
+              padding: theme.spacing.md, 
+              borderRadius: theme.borderRadius.md,
+              marginBottom: theme.spacing.md,
+              alignItems: 'center'
+            }} 
+            onPress={() => navigation.navigate('ManageManagers')}
+          >
+            <Text style={{ color: 'white', fontWeight: '700' }}>Manage Managers</Text>
+          </TouchableOpacity>
+        )}
+
         {/* Profile Completion Banner */}
         {!isProfileComplete && (
           <View style={styles.warningBanner}>

@@ -9,7 +9,7 @@ import { partyAPI } from '../services/api';
 export default function PartyListScreen({ navigation }: any) {
   const [parties, setParties] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [canCreateParty, setCanCreateParty] = useState(false);
 
   useEffect(() => {
     loadUserData();
@@ -28,7 +28,9 @@ export default function PartyListScreen({ navigation }: any) {
       const userData = await AsyncStorage.getItem('userData');
       if (userData) {
         const user = JSON.parse(userData);
-        setIsAdmin(user.isAdmin || false);
+        const isManager = user.role === 'manager' && user.isApproved;
+        const isAdminUser = user.isAdmin || user.role === 'admin';
+        setCanCreateParty(isAdminUser || isManager);
       }
     } catch (error) {
       console.error('Error loading user data:', error);
@@ -87,6 +89,15 @@ export default function PartyListScreen({ navigation }: any) {
       {/* --- START OF HEADER --- */}
       <View style={styles.header}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          {canCreateParty && (
+            <TouchableOpacity 
+              style={{ marginRight: 15, padding: 5 }} 
+              onPress={() => navigation.navigate('AdminPanel')}
+            >
+              <Ionicons name="add-circle-outline" size={30} color={theme.colors.primary} />
+            </TouchableOpacity>
+          )}
+
           {/* Buttons moved to LEFT side for RTL feel, or keep right if preferred */}
           <TouchableOpacity 
             style={{ marginRight: 15, padding: 5 }} 
@@ -123,7 +134,7 @@ export default function PartyListScreen({ navigation }: any) {
           <View style={styles.emptyState}>
             <Ionicons name="calendar-outline" size={64} color={theme.colors.textLight} />
             <Text style={styles.emptyText}>אין מסיבות זמינות כרגע</Text>
-            {isAdmin && (
+            {canCreateParty && (
               <Text style={styles.emptySubtext}>Tap + to create one</Text>
             )}
           </View>

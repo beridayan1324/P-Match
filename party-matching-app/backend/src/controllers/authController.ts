@@ -7,16 +7,28 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-this';
 
 export const register = async (req: Request, res: Response) => {
   try {
-    const { email, password, name, gender } = req.body;
+    const { email, password, name, gender, role } = req.body;
     const existingUser = await User.findOne({ where: { email } });
     if (existingUser) {
       return res.status(400).json({ message: 'User already exists' });
     }
+    
+    const userRole = role === 'manager' ? 'manager' : 'user';
+    const isApproved = userRole !== 'manager';
+
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await User.create({ email, password: hashedPassword, name, gender, isAdmin: false });
+    const user = await User.create({ 
+      email, 
+      password: hashedPassword, 
+      name, 
+      gender, 
+      isAdmin: false,
+      role: userRole,
+      isApproved
+    });
     const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
     
-    console.log('Register - User created:', { id: user.id, email: user.email, isAdmin: user.isAdmin });
+    console.log('Register - User created:', { id: user.id, email: user.email, role: user.role, isApproved: user.isApproved });
     
     res.status(201).json({ 
       token, 
@@ -24,7 +36,9 @@ export const register = async (req: Request, res: Response) => {
         id: user.id, 
         email: user.email, 
         name: user.name,
-        isAdmin: user.isAdmin || false
+        isAdmin: user.isAdmin || false,
+        role: user.role,
+        isApproved: user.isApproved
       } 
     });
   } catch (error) {
@@ -49,7 +63,7 @@ export const login = async (req: Request, res: Response) => {
     
     const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
     
-    console.log('Login - User found:', { id: user.id, email: user.email, isAdmin: user.isAdmin });
+    console.log('Login - User found:', { id: user.id, email: user.email, isAdmin: user.isAdmin, role: user.role });
     
     res.json({ 
       token, 
@@ -57,7 +71,9 @@ export const login = async (req: Request, res: Response) => {
         id: user.id, 
         email: user.email, 
         name: user.name,
-        isAdmin: user.isAdmin || false
+        isAdmin: user.isAdmin || false,
+        role: user.role,
+        isApproved: user.isApproved
       } 
     });
   } catch (error) {

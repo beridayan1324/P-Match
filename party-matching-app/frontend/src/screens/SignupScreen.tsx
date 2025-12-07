@@ -12,6 +12,7 @@ export default function SignupScreen({ navigation }: any) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [gender, setGender] = useState<'male' | 'female' | 'other'>('male');
+  const [role, setRole] = useState<'user' | 'manager'>('user');
   const [loading, setLoading] = useState(false);
 
   const handleSignup = async () => {
@@ -22,7 +23,7 @@ export default function SignupScreen({ navigation }: any) {
 
     try {
       setLoading(true);
-      console.log('Attempting signup with:', { email, name, gender });
+      console.log('Attempting signup with:', { email, name, gender, role });
       console.log('URL:', `${API_URL}/api/auth/register`);
       
       const response = await axios.post(`${API_URL}/api/auth/register`, {
@@ -30,6 +31,7 @@ export default function SignupScreen({ navigation }: any) {
         password,
         name,
         gender,
+        role,
       });
 
       console.log('Signup response:', response.data);
@@ -39,7 +41,13 @@ export default function SignupScreen({ navigation }: any) {
         await AsyncStorage.setItem('userData', JSON.stringify(response.data.user));
       }
 
-      navigation.replace('PartyList');
+      if (role === 'manager' && !response.data.user.isApproved) {
+        Alert.alert('Success', 'Account created. Please wait for admin approval to post parties.', [
+            { text: 'OK', onPress: () => navigation.replace('PartyList') }
+        ]);
+      } else {
+        navigation.replace('PartyList');
+      }
     } catch (error: any) {
       console.error('Signup error:', error);
       console.error('Error response:', error.response?.data);
@@ -97,6 +105,23 @@ export default function SignupScreen({ navigation }: any) {
                 >
                   <Text style={[styles.genderText, gender === g && styles.genderTextActive]}>
                     {g.charAt(0).toUpperCase() + g.slice(1)}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          <View style={{ marginBottom: theme.spacing.md }}>
+            <Text style={styles.label}>Role</Text>
+            <View style={styles.genderButtons}>
+              {['user', 'manager'].map((r) => (
+                <TouchableOpacity
+                  key={r}
+                  style={[styles.genderButton, role === r && styles.genderButtonActive]}
+                  onPress={() => setRole(r as any)}
+                >
+                  <Text style={[styles.genderText, role === r && styles.genderTextActive]}>
+                    {r.charAt(0).toUpperCase() + r.slice(1)}
                   </Text>
                 </TouchableOpacity>
               ))}
