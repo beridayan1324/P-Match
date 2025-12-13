@@ -54,6 +54,7 @@ export default function InputField({
 const styles = StyleSheet.create({
   container: {
     marginBottom: theme.spacing.md,
+    width: '100%',
   },
   label: {
     fontSize: 14,

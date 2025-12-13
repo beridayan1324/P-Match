@@ -3,7 +3,9 @@ import sequelize from '../db';
 
 interface PartyParticipantAttributes {
   id?: string;
-  userId: string;
+  userId?: string | null;
+  guestName?: string | null;
+  guestEmail?: string | null;
   partyId: string;
   joinedAt?: Date;
   status?: 'pending' | 'accepted' | 'rejected' | 'abandoned';
@@ -16,7 +18,9 @@ interface PartyParticipantAttributes {
 
 class PartyParticipant extends Model<PartyParticipantAttributes> implements PartyParticipantAttributes {
   public id!: string;
-  public userId!: string;
+  public userId!: string | null;
+  public guestName!: string | null;
+  public guestEmail!: string | null;
   public partyId!: string;
   public joinedAt!: Date;
   public status!: 'pending' | 'accepted' | 'rejected' | 'abandoned';
@@ -39,12 +43,20 @@ PartyParticipant.init(
     },
     userId: {
       type: DataTypes.UUID,
-      allowNull: false,
+      allowNull: true,
       references: {
         model: 'users',
         key: 'id',
       },
       onDelete: 'CASCADE',
+    },
+    guestName: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    guestEmail: {
+      type: DataTypes.STRING,
+      allowNull: true,
     },
     partyId: {
       type: DataTypes.UUID,
@@ -90,10 +102,8 @@ PartyParticipant.init(
     tableName: 'party_participants',
     timestamps: true,
     indexes: [
-      {
-        unique: true,
-        fields: ['userId', 'partyId'],
-      },
+      // Removed unique index on userId+partyId to allow multiple guests (userId=null)
+      // We will enforce uniqueness for registered users in the controller logic
     ],
   }
 );

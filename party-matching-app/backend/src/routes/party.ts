@@ -6,7 +6,9 @@ import {
   createParty, 
   getAllParties, 
   getPartyDetails,
+  getPublicPartyDetails,
   joinParty, 
+  joinPartyPublic,
   getPartyParticipants,
   getUserMatches,
   toggleMatchingStatus,
@@ -34,8 +36,14 @@ router.get('/', authenticate, getAllParties);
 // Get specific party details
 router.get('/:partyId', authenticate, getPartyDetails);
 
+// Public party details
+router.get('/:partyId/public', getPublicPartyDetails);
+
 // Join party (Buy Ticket)
 router.post('/:partyId/join', authenticate, joinParty);
+
+// Public join (Guest)
+router.post('/:partyId/join-public', joinPartyPublic);
 
 // Toggle matching status
 router.post('/:partyId/matching-status', authenticate, toggleMatchingStatus);

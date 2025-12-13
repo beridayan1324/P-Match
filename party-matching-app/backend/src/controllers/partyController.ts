@@ -6,6 +6,7 @@ import PartyParticipant from '../models/PartyParticipant';
 import User from '../models/User';
 import Match from '../models/Match';
 import { MatchingService } from '../services/matchingService';
+import { sendTicketEmail } from '../services/emailService';
 
 // Create a new party
 export const createParty = async (req: any, res: Response) => {
@@ -119,6 +120,32 @@ export const getPartyDetails = async (req: any, res: Response) => {
   }
 };
 
+export const getPublicPartyDetails = async (req: Request, res: Response) => {
+  try {
+    const { partyId } = req.params;
+    
+    const party = await Party.findByPk(partyId);
+    if (!party) {
+      return res.status(404).json({ message: 'Party not found' });
+    }
+    
+    // Only return public info
+    const partyData = {
+      id: party.id,
+      name: party.name,
+      date: party.date,
+      location: party.location,
+      description: party.description,
+      imageUrl: party.image,
+    };
+    
+    res.json(partyData);
+  } catch (error) {
+    console.error('Get public party details error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 export const joinParty = async (req: any, res: Response) => {
   try {
     const userId = req.userId;
@@ -175,6 +202,71 @@ export const joinParty = async (req: any, res: Response) => {
     res.status(201).json({ message: 'Successfully joined party', participant });
   } catch (error) {
     console.error('Join party error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const joinPartyPublic = async (req: Request, res: Response) => {
+  try {
+    const { partyId } = req.params;
+    const { name, email } = req.body;
+
+    if (!name || !email) {
+      return res.status(400).json({ message: 'Name and email are required' });
+    }
+
+    // Check if party exists
+    const party = await Party.findByPk(partyId);
+    if (!party) {
+      return res.status(404).json({ message: 'Party not found' });
+    }
+
+    // Check if email already registered for this party
+    const existing = await PartyParticipant.findOne({
+      where: { partyId, guestEmail: email },
+    });
+
+    if (existing) {
+      return res.status(400).json({ message: 'This email has already joined the party' });
+    }
+
+    // Generate ticket code
+    const ticketCode = uuidv4().substring(0, 8).toUpperCase();
+
+    // Create participant
+    const participant = await PartyParticipant.create({
+      partyId,
+      userId: null, // Guest
+      guestName: name,
+      guestEmail: email,
+      status: 'accepted', // Auto-accept guests for now
+      paid: true, // Assume paid or free for now
+      ticketCode,
+      optIn: false, // Guests don't participate in matching
+    });
+
+    // Send email
+    try {
+      await sendTicketEmail(
+        email,
+        name,
+        party.name,
+        ticketCode,
+        party.date.toString(),
+        party.location
+      );
+    } catch (emailError) {
+      console.error('Failed to send email, but participant created:', emailError);
+      // Continue execution - don't fail the request just because email failed
+    }
+
+    res.status(201).json({ 
+      message: 'Ticket created successfully', 
+      ticketCode 
+    });
+
+  } catch (error) {
+    console.error('Join party public error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };

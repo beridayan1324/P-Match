@@ -28,6 +28,13 @@ export default function WelcomeScreen({ navigation }: any) {
               התחבר
             </Text>
           </Text>
+
+          <Text style={[styles.loginText, { marginTop: 20 }]}>
+            יש לך הזמנה?{' '}
+            <Text style={styles.loginLink} onPress={() => navigation.navigate('PublicJoin')}>
+              קנה כרטיס אורח
+            </Text>
+          </Text>
         </View>
 
         <View style={[styles.shape, styles.shape1]} />

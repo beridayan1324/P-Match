@@ -21,6 +21,7 @@ import ChatScreen from './src/screens/ChatScreen'; // Import the screen
 import ChatsListScreen from './src/screens/ChatsListScreen';
 import TicketScreen from './src/screens/TicketScreen';
 import ScannerScreen from './src/screens/ScannerScreen';
+import PublicJoinScreen from './src/screens/PublicJoinScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -50,6 +51,7 @@ export default function App() {
             <Stack.Screen name="Welcome" component={WelcomeScreen} />
             <Stack.Screen name="Signup" component={SignupScreen} />
             <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="PublicJoin" component={PublicJoinScreen} />
           </Stack.Group>
 
           <Stack.Group>

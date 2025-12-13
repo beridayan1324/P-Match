@@ -16,8 +16,18 @@ async function startServer() {
     await sequelize.authenticate();
     console.log('Connected to SQL database');
     
+    // Disable foreign keys for SQLite to allow table alterations
+    if (sequelize.getDialect() === 'sqlite') {
+      await sequelize.query('PRAGMA foreign_keys = OFF;');
+    }
+
     await sequelize.sync({ alter: false });
     console.log('Database schema loaded');
+
+    // Re-enable foreign keys
+    if (sequelize.getDialect() === 'sqlite') {
+      await sequelize.query('PRAGMA foreign_keys = ON;');
+    }
     
     // Start cron job for automatic matching (check every 1 minute for debugging)
     setInterval(async () => {

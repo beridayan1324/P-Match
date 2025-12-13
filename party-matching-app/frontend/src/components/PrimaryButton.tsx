@@ -7,16 +7,21 @@ interface PrimaryButtonProps {
   title: string;
   onPress: () => void;
   loading?: boolean;
+  disabled?: boolean;
   style?: ViewStyle;
   icon?: string;
 }
 
-export default function PrimaryButton({ title, onPress, loading, style, icon }: PrimaryButtonProps) {
+export default function PrimaryButton({ title, onPress, loading, disabled, style, icon }: PrimaryButtonProps) {
   return (
     <TouchableOpacity 
-      style={[styles.button, style]} 
+      style={[
+        styles.button, 
+        (disabled || loading) && styles.disabledButton,
+        style
+      ]} 
       onPress={onPress}
-      disabled={loading}
+      disabled={loading || disabled}
     >
       {loading ? (
         <ActivityIndicator color={theme.colors.white} />
@@ -40,6 +45,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flexDirection: 'row',
     ...theme.shadows.card,
+  },
+  disabledButton: {
+    opacity: 0.6,
+    backgroundColor: theme.colors.textLight,
   },
   icon: {
     marginRight: theme.spacing.xs,

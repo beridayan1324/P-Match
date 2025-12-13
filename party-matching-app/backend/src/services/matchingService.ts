@@ -38,9 +38,14 @@ export class MatchingService {
       }
 
       // Get user data
+      // Filter out null userIds (guests)
+      const userIds = participants
+        .map(p => p.userId)
+        .filter((id): id is string => id !== null);
+
       const users = await User.findAll({
         where: {
-          id: participants.map(p => p.userId),
+          id: userIds,
         },
       });
 

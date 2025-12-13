@@ -46,6 +46,20 @@ export default function ManagerPartyDetailsScreen({ route, navigation }: any) {
 
   const renderMainTab = () => (
     <ScrollView contentContainerStyle={styles.tabContent}>
+      {/* Party ID for Sharing */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Party ID (Share this)</Text>
+        <TouchableOpacity 
+          style={styles.idContainer}
+          onPress={() => {
+            Alert.alert('Party ID', party.id);
+          }}
+        >
+          <Text style={styles.idText}>{party.id}</Text>
+          <Ionicons name="copy-outline" size={20} color={theme.colors.primary} />
+        </TouchableOpacity>
+      </View>
+
       {/* Status Cards */}
       <View style={styles.statsGrid}>
         <View style={styles.statCard}>
@@ -494,5 +508,19 @@ const styles = StyleSheet.create({
       width: 10,
       height: 10,
       borderRadius: 5,
+  },
+  idContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: theme.colors.white,
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    ...theme.shadows.card,
+  },
+  idText: {
+    fontSize: 16,
+    color: theme.colors.text,
+    fontFamily: 'monospace',
   },
 });
