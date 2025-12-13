@@ -26,7 +26,7 @@ async function startServer() {
     }, 1 * 60 * 1000); // Changed from 5 minutes to 1 minute
     
     app.listen(PORT, () => {
-      console.log(`Server is running on http://localhost:${PORT}`);
+      console.log(`Server is running on http://10.0.0.16:${PORT}`);
       console.log('Automatic matching checker is active (every 1 minute)');
     });
   } catch (error) {

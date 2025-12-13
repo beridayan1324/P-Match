@@ -39,6 +39,9 @@ router.post('/:partyId/matching-status', authenticate, toggleMatchingStatus);
 // Get party participants
 router.get('/:partyId/participants', authenticate, getPartyParticipants);
 
+// Get user matches for a party
+router.get('/:partyId/matches', authenticate, getUserMatches);
+
 // Accept/Reject match
 router.post('/match/:matchId/respond', authenticate, respondToMatch);
 

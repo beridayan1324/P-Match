@@ -5,7 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { theme } from '../theme/theme';
 
-const API_URL = 'http://10.0.0.15:5000';
+const API_URL = 'http://10.0.0.16:5000';
 
 export default function SignupScreen({ navigation }: any) {
   const [name, setName] = useState('');

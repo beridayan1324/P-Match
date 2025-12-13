@@ -52,8 +52,8 @@
   },
   "expo": {
     "extra": {
-      "apiUrl": "http://10.0.0.15:5000"
+      "apiUrl": "http://10.0.0.16:5000"
     }
   },
-  "EXPO_PUBLIC_API_URL": "http://10.0.0.15:5000"
+  "EXPO_PUBLIC_API_URL": "http://10.0.0.16:5000"
 }
