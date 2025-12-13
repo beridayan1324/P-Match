@@ -69,6 +69,7 @@ export const profileAPI = {
 
 export const partyAPI = {
   getAllParties: () => apiClient.get('/api/party'),
+  getPartyDetails: (partyId: string) => apiClient.get(`/api/party/${partyId}`),
   createParty: (data: any) => apiClient.post('/api/party', data),
   joinParty: (partyId: string) => apiClient.post(`/api/party/${partyId}/join`),
   getParticipants: (partyId: string, optInOnly?: boolean) => apiClient.get(`/api/party/${partyId}/participants`, { params: { optInOnly } }),

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -17,8 +17,10 @@ export default function PartyDetailsScreen({ route, navigation }: any) {
   const [loading, setLoading] = useState(false);
   const [countdown, setCountdown] = useState('');
   const [isManager, setIsManager] = useState(false);
+  const [roleLoaded, setRoleLoaded] = useState(false);
 
   useEffect(() => {
+    loadPartyDetails();
     loadParticipants();
     loadUserData();
     updateCountdown();
@@ -32,6 +34,18 @@ export default function PartyDetailsScreen({ route, navigation }: any) {
     };
   }, []);
 
+  const loadPartyDetails = async () => {
+    try {
+      const response = await partyAPI.getPartyDetails(party.id);
+      const updatedParty = response.data;
+      setHasJoined(updatedParty.hasJoined);
+      setIsOptedIn(updatedParty.isOptedIn);
+      setTicketCode(updatedParty.ticketCode);
+    } catch (error) {
+      console.error('Failed to load party details', error);
+    }
+  };
+
   const loadUserData = async () => {
     try {
       const userData = await AsyncStorage.getItem('userData');
@@ -44,6 +58,8 @@ export default function PartyDetailsScreen({ route, navigation }: any) {
       }
     } catch (error) {
       console.error('Error loading user data:', error);
+    } finally {
+      setRoleLoaded(true);
     }
   };
 
@@ -254,14 +270,16 @@ export default function PartyDetailsScreen({ route, navigation }: any) {
 
         {/* Action Buttons */}
         <View style={styles.actionsContainer}>
-          {!hasJoined ? (
+          {!roleLoaded ? (
+             <ActivityIndicator size="small" color={theme.colors.primary} />
+          ) : !isManager && !hasJoined ? (
             <PrimaryButton
               title={`Buy Ticket ${party.ticketPrice > 0 ? `(₪${party.ticketPrice})` : '(Free)'}`}
               onPress={handleJoinParty}
               loading={loading}
               icon="card-outline"
             />
-          ) : (
+          ) : !isManager && hasJoined ? (
             <>
               <View style={styles.joinedBadge}>
                 <Text style={styles.joinedText}>You have a ticket!</Text>
@@ -297,7 +315,7 @@ export default function PartyDetailsScreen({ route, navigation }: any) {
                 icon="qr-code-outline"
               />
             </>
-          )}
+          ) : null}
 
           {isManager && (
             <PrimaryButton

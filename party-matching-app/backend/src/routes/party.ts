@@ -5,6 +5,7 @@ import isManager from '../middleware/isManager';
 import { 
   createParty, 
   getAllParties, 
+  getPartyDetails,
   joinParty, 
   getPartyParticipants,
   getUserMatches,
@@ -29,6 +30,9 @@ router.post('/', authenticate, isManager, createParty);
 
 // All users - get parties
 router.get('/', authenticate, getAllParties);
+
+// Get specific party details
+router.get('/:partyId', authenticate, getPartyDetails);
 
 // Join party (Buy Ticket)
 router.post('/:partyId/join', authenticate, joinParty);

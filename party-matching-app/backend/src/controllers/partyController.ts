@@ -41,7 +41,17 @@ export const getAllParties = async (req: any, res: Response) => {
   try {
     const userId = req.userId;
     
+    // Check user role
+    const user = await User.findByPk(userId);
+    const isManager = user?.role === 'manager';
+
+    const whereClause: any = {};
+    if (isManager) {
+        whereClause.createdBy = userId;
+    }
+
     const parties = await Party.findAll({
+      where: whereClause,
       order: [['date', 'ASC']],
     });
     
@@ -75,6 +85,40 @@ export const getAllParties = async (req: any, res: Response) => {
   }
 };
 
+export const getPartyDetails = async (req: any, res: Response) => {
+  try {
+    const userId = req.userId;
+    const { partyId } = req.params;
+    
+    const party = await Party.findByPk(partyId);
+    if (!party) {
+      return res.status(404).json({ message: 'Party not found' });
+    }
+    
+    const participation = await PartyParticipant.findOne({
+      where: { userId, partyId },
+    });
+    
+    const now = new Date();
+    const matchingTime = party.matchingStartTime ? new Date(party.matchingStartTime) : null;
+    const timeUntilMatching = matchingTime ? matchingTime.getTime() - now.getTime() : null;
+
+    const partyData = {
+      ...party.toJSON(),
+      timeUntilMatching: timeUntilMatching && timeUntilMatching > 0 ? timeUntilMatching : null,
+      matchingAvailable: party.matchingStarted,
+      hasJoined: !!participation,
+      ticketCode: participation ? participation.ticketCode : null,
+      isOptedIn: participation ? participation.optIn : false,
+    };
+    
+    res.json(partyData);
+  } catch (error) {
+    console.error('Get party details error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 export const joinParty = async (req: any, res: Response) => {
   try {
     const userId = req.userId;
@@ -84,6 +128,10 @@ export const joinParty = async (req: any, res: Response) => {
     const user = await User.findByPk(userId);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (user.role === 'manager' || user.role === 'admin') {
+      return res.status(403).json({ message: 'Managers cannot join parties as participants.' });
     }
     
     if (!MatchingService.isProfileComplete(user)) {

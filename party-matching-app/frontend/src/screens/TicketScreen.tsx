@@ -23,10 +23,14 @@ export default function TicketScreen({ route, navigation }: any) {
         <Text style={styles.location}>{location}</Text>
         
         <View style={styles.qrContainer}>
-          <QRCode
-            value={ticketCode}
-            size={200}
-          />
+          {ticketCode ? (
+            <QRCode
+              value={ticketCode}
+              size={200}
+            />
+          ) : (
+            <Text style={styles.code}>No Ticket Code Available</Text>
+          )}
         </View>
         
         <Text style={styles.code}>{ticketCode}</Text>
