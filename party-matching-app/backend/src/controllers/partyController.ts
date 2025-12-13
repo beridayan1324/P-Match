@@ -153,6 +153,18 @@ export const toggleMatchingStatus = async (req: any, res: Response) => {
                 message: 'Profile incomplete. Please complete your profile first.',
             });
         }
+
+        // Check if matching has already started
+        const party = await Party.findByPk(partyId);
+        if (party && party.matchingStartTime && new Date() > new Date(party.matchingStartTime)) {
+             return res.status(400).json({ message: 'Matching has already started. You cannot join the matching pool now.' });
+        }
+    } else {
+        // User is trying to leave (optIn = false)
+        const party = await Party.findByPk(partyId);
+        if (party && party.matchingStartTime && new Date() > new Date(party.matchingStartTime)) {
+             return res.status(400).json({ message: 'Matching has already started. You cannot leave the matching pool now.' });
+        }
     }
 
     console.log(`Updating matching status for user ${userId} in party ${partyId} to ${optIn}`);
