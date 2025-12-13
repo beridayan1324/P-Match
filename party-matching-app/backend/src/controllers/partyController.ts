@@ -155,6 +155,7 @@ export const toggleMatchingStatus = async (req: any, res: Response) => {
         }
     }
 
+    console.log(`Updating matching status for user ${userId} in party ${partyId} to ${optIn}`);
     participant.optIn = optIn;
     await participant.save();
 
@@ -168,9 +169,18 @@ export const toggleMatchingStatus = async (req: any, res: Response) => {
 export const getPartyParticipants = async (req: Request, res: Response) => {
   try {
     const { partyId } = req.params;
+    const { optInOnly } = req.query;
+
+    const whereClause: any = { partyId };
+    // Check for string 'true' or boolean true
+    if (String(optInOnly) === 'true') {
+      whereClause.optIn = true;
+    }
     
+    console.log(`Getting participants for party ${partyId}. OptInOnly: ${optInOnly}, Where:`, whereClause);
+
     const participants = await PartyParticipant.findAll({
-      where: { partyId },
+      where: whereClause,
       include: [
         {
           model: User,

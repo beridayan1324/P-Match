@@ -22,8 +22,14 @@ export default function PartyDetailsScreen({ route, navigation }: any) {
     loadParticipants();
     loadUserData();
     updateCountdown();
-    const interval = setInterval(updateCountdown, 1000);
-    return () => clearInterval(interval);
+    
+    const countdownInterval = setInterval(updateCountdown, 1000);
+    const dataInterval = setInterval(loadParticipants, 5000); // Refresh participants every 5 seconds
+
+    return () => {
+      clearInterval(countdownInterval);
+      clearInterval(dataInterval);
+    };
   }, []);
 
   const loadUserData = async () => {
@@ -43,7 +49,7 @@ export default function PartyDetailsScreen({ route, navigation }: any) {
 
   const loadParticipants = async () => {
     try {
-      const response = await partyAPI.getParticipants(party.id);
+      const response = await partyAPI.getParticipants(party.id, true);
       setParticipants(response.data.participants.slice(0, 3)); // Only first 3
       setTotalParticipants(response.data.total);
     } catch (error) {
@@ -112,6 +118,8 @@ export default function PartyDetailsScreen({ route, navigation }: any) {
         const newStatus = !isOptedIn;
         await partyAPI.toggleMatchingStatus(party.id, newStatus);
         setIsOptedIn(newStatus);
+        // Small delay to ensure DB update is propagated
+        setTimeout(() => loadParticipants(), 200);
         Alert.alert('Success', newStatus ? 'You have joined the matching pool!' : 'You have left the matching pool.');
     } catch (error: any) {
         Alert.alert('Error', error.response?.data?.message || 'Failed to update matching status');

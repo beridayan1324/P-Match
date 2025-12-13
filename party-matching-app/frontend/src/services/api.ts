@@ -71,7 +71,7 @@ export const partyAPI = {
   getAllParties: () => apiClient.get('/api/party'),
   createParty: (data: any) => apiClient.post('/api/party', data),
   joinParty: (partyId: string) => apiClient.post(`/api/party/${partyId}/join`),
-  getParticipants: (partyId: string) => apiClient.get(`/api/party/${partyId}/participants`),
+  getParticipants: (partyId: string, optInOnly?: boolean) => apiClient.get(`/api/party/${partyId}/participants`, { params: { optInOnly } }),
   getMatches: (partyId: string) => apiClient.get(`/api/party/${partyId}/matches`),
   respondToMatch: (matchId: string, action: 'accept' | 'reject') => 
     apiClient.post(`/api/party/match/${matchId}/respond`, { action }),
