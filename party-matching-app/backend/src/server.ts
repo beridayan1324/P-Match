@@ -3,6 +3,7 @@ import app from './app';
 import sequelize from './db';
 import './models/index';
 import { MatchingService } from './services/matchingService';
+import { CleanupService } from './services/cleanupService';
 import chatRoutes from './routes/chat';
 
 dotenv.config();
@@ -29,11 +30,12 @@ async function startServer() {
       await sequelize.query('PRAGMA foreign_keys = ON;');
     }
     
-    // Start cron job for automatic matching (check every 1 minute for debugging)
+    // Start cron job for automatic matching and cleanup (check every 1 minute)
     setInterval(async () => {
-      console.log('--- Checking for parties ready for matching ---');
+      console.log('--- Running scheduled tasks ---');
       await MatchingService.checkAndRunMatching();
-    }, 1 * 60 * 1000); // Changed from 5 minutes to 1 minute
+      await CleanupService.deleteOldParties();
+    }, 1 * 60 * 1000); // Every 1 minute
     
     app.listen(PORT, () => {
       console.log(`Server is running on http://10.0.0.16:${PORT}`);
