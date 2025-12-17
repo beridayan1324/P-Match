@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, Alert, TouchableOpacity, Image } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Alert, TouchableOpacity, Image, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -121,34 +121,76 @@ export default function AdminPanelScreen({ navigation }: any) {
 
         <View style={styles.dateSection}>
           <Text style={styles.label}>Date & Time *</Text>
-          <TouchableOpacity 
-            style={styles.dateButton}
-            onPress={() => setShowDatePicker(true)}
-          >
-            <Ionicons name="calendar-outline" size={20} color={theme.colors.primary} />
-            <Text style={styles.dateText}>
-              {date.toLocaleString('en-US', { 
-                dateStyle: 'medium', 
-                timeStyle: 'short' 
-              })}
-            </Text>
-          </TouchableOpacity>
-        </View>
+          {Platform.OS === 'web' ? (
+            <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
+              <input
+                type="date"
+                style={{
+                  padding: 10,
+                  borderRadius: 8,
+                  border: '1px solid #ccc',
+                  fontSize: 16,
+                  fontFamily: 'inherit'
+                }}
+                value={date.toISOString().split('T')[0]}
+                onChange={(e: any) => {
+                  const newDate = new Date(date);
+                  const [y, m, d] = e.target.value.split('-');
+                  newDate.setFullYear(parseInt(y), parseInt(m) - 1, parseInt(d));
+                  setDate(newDate);
+                }}
+              />
+              <input
+                type="time"
+                style={{
+                  padding: 10,
+                  borderRadius: 8,
+                  border: '1px solid #ccc',
+                  fontSize: 16,
+                  fontFamily: 'inherit'
+                }}
+                value={date.toTimeString().slice(0, 5)}
+                onChange={(e: any) => {
+                  const newDate = new Date(date);
+                  const [h, m] = e.target.value.split(':');
+                  newDate.setHours(parseInt(h));
+                  newDate.setMinutes(parseInt(m));
+                  setDate(newDate);
+                }}
+              />
+            </View>
+          ) : (
+            <>
+              <TouchableOpacity 
+                style={styles.dateButton}
+                onPress={() => setShowDatePicker(true)}
+              >
+                <Ionicons name="calendar-outline" size={20} color={theme.colors.primary} />
+                <Text style={styles.dateText}>
+                  {date.toLocaleString('en-US', { 
+                    dateStyle: 'medium', 
+                    timeStyle: 'short' 
+                  })}
+                </Text>
+              </TouchableOpacity>
 
-        {showDatePicker && (
-          <DateTimePicker
-            value={date}
-            mode="datetime"
-            display="default"
-            onChange={(event, selectedDate) => {
-              setShowDatePicker(false);
-              if (selectedDate) {
-                setDate(selectedDate);
-              }
-            }}
-            minimumDate={new Date()}
-          />
-        )}
+              {showDatePicker && (
+                <DateTimePicker
+                  value={date}
+                  mode="datetime"
+                  display="default"
+                  onChange={(event, selectedDate) => {
+                    setShowDatePicker(false);
+                    if (selectedDate) {
+                      setDate(selectedDate);
+                    }
+                  }}
+                  minimumDate={new Date()}
+                />
+              )}
+            </>
+          )}
+        </View>
 
         <InputField
           label="Description"
