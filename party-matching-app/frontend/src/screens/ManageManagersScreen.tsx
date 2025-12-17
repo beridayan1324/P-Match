@@ -6,7 +6,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { theme } from '../theme/theme';
 
-const API_URL = 'http://16.171.54.43:5000';
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000';
 
 export default function ManageManagersScreen({ navigation }: any) {
   const [managers, setManagers] = useState([]);
