@@ -1,2 +1,2 @@
 // Auto-generated vulnerability test 
-const secret = "KEY_21766"; 
+const secret = "KEY_15789"; 
